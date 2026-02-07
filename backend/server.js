@@ -19,11 +19,27 @@ app.use((req, res, next) => {
     if (req.method === 'POST') console.log('Body:', JSON.stringify(req.body, null, 2));
     next();
 });
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'loginpage', 'index.html'));
+// CSP Middleware
+app.use((req, res, next) => {
+    res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://ui-avatars.com;"
+    );
+    next();
 });
-app.use(express.static(path.join(__dirname, 'loginpage')));
-app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
+
+app.get('/', (req, res) => {
+    const indexPath = path.join(__dirname, '../frontend/loginpage', 'index.html');
+    console.log(`Serving index from: ${indexPath}`);
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            res.status(500).send('Error loading login page');
+        }
+    });
+});
+app.use(express.static(path.join(__dirname, '../frontend/loginpage')));
+app.use('/dashboard', express.static(path.join(__dirname, '../frontend/dashboard')));
 
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
