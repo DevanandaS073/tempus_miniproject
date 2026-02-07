@@ -12,16 +12,16 @@ A modern, fluid web application featuring an interactive mascot, liquid backgrou
 
 ### 1. Installation
 
-Clone the repository and navigate to the `app/backend` directory:
+Clone the repository and navigate to the `backend` directory:
 
 ```bash
-cd app/backend
+cd backend
 npm install
 ```
 
 ### 2. Environment Setup
 
-Create a `.env` file in the `app/backend` folder with your database credentials:
+Create a `.env` file in the `backend` folder with your database credentials:
 
 ```bash
 DATABASE_URL="postgresql://user:password@localhost:5432/tempus_db?schema=public"
