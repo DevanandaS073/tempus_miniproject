@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model users {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(100)
+  email         String   @unique @db.VarChar(255)
+  password_hash String
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+}
+
+model poster_templates {
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(255)
+  event_type       String             @db.VarChar(100)
+  file_path        String             @db.VarChar(500)
+  is_active        Boolean            @default(true)
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  
+  generated_posters generated_posters[]
+  
+  @@index([event_type])
+  @@index([is_active])
+}
+
+model generated_posters {
+  id           Int               @id @default(autoincrement())
+  event_id     Int
+  template_id  Int
+  poster_path  String            @db.VarChar(500)
+  generated_at DateTime          @default(now()) @db.Timestamp(6)
+  status       Status            @default(pending)
+  
+  template     poster_templates  @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  
+  @@index([event_id])
+  @@index([template_id])
+  @@index([status])
+  @@index([generated_at])
+}
+
+enum Status {
+  pending
+  completed
+  failed
+}

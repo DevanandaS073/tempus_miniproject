@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tempus | Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>Tempus</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active"><a href="#"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+                <li><a href="#"><i class="fa-regular fa-calendar"></i> Calendar</a></li>
+                <li><a href="#"><i class="fa-solid fa-chart-pie"></i> Reports</a></li>
+                <li><a href="#"><i class="fa-solid fa-robot"></i> Automation</a></li>
+                <li class="spacer"></li>
+                <li><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
+                <li><a href="/" class="logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="welcome-text">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back, <span id="user-name">User</span>!</p>
+                </div>
+
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" alt="Avatar">
+                    <div class="profile-info">
+                        <span class="name">John Doe</span>
+                        <span class="role">Administrator</span>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" placeholder="Search...">
+                    </div>
+                    <div class="notification-bell">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="grid-section stats-row">
+                    <div class="stat-card">
+                        <div class="icon-box blue"><i class="fa-solid fa-users"></i></div>
+                        <div class="stat-info">
+                            <h3>Total Participants</h3>
+                            <p class="value" id="stat-participants">--</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-box green"><i class="fa-regular fa-calendar-check"></i></div>
+                        <div class="stat-info">
+                            <h3>Upcoming Events</h3>
+                            <p class="value" id="stat-events">--</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-box purple"><i class="fa-solid fa-clock"></i></div>
+                        <div class="stat-info">
+                            <h3>Meeting Hours</h3>
+                            <p class="value" id="stat-hours">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-section main-panels">
+                    <div class="panel-column left">
+                        <div class="card calendar-card">
+                            <div class="card-header">
+                                <h3>Calendar Overview</h3>
+                                <button class="btn-icon"><i class="fa-solid fa-ellipsis"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <div class="calendar-wrapper">
+                                    <div class="calendar-header-row">
+                                        <h4 id="calendar-month">October 2025</h4>
+                                        <div class="calendar-nav">
+                                            <button class="btn-icon mini"><i
+                                                    class="fa-solid fa-chevron-left"></i></button>
+                                            <button class="btn-icon mini"><i
+                                                    class="fa-solid fa-chevron-right"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="calendar-grid-header">
+                                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                    </div>
+                                    <div class="calendar-grid" id="calendar-dates">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card upcoming-card">
+                            <div class="card-header">
+                                <h3>Upcoming Meetings</h3>
+                                <a href="#" class="view-all">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="meetings-list" id="upcoming-list">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-column right">
+                        <div class="card automation-card">
+                            <div class="card-header">
+                                <h3>Automation Status</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="automation-list" id="automation-list">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card reports-card">
+                            <div class="card-header">
+                                <h3>Recent Reports</h3>
+                                <a href="#" class="view-all">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="reports-list" id="reports-list">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

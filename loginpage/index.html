@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tempus | Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <div class="login-container">
+        <div class="auth-wrapper">
+            <div class="mascot-container">
+                <div class="mascot">
+                    <div class="mascot-head">
+                        <div class="mascot-eyes">
+                            <div class="eye left"></div>
+                            <div class="eye right"></div>
+                        </div>
+                        <div class="mascot-antenna">
+                            <div class="antenna-bulb"></div>
+                        </div>
+                    </div>
+                    <div class="mascot-hand left"></div>
+                    <div class="mascot-hand right"></div>
+                    <div class="mascot-body"></div>
+                </div>
+            </div>
+
+            <div class="login-card">
+                <div id="login-view" class="view-section active">
+                    <div class="login-header">
+                        <h1>Tempus</h1>
+                        <p>Welcome back! Please login to your account.</p>
+                    </div>
+                    <form id="loginForm" class="login-form">
+                        <div class="input-group">
+                            <input type="email" id="email" required placeholder=" ">
+                            <label for="email">Email Address</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="password" required placeholder=" ">
+                            <label for="password">Password</label>
+                            <span class="toggle-password" onclick="togglePassword('password', this)">👁️</span>
+                        </div>
+                        <div class="form-actions">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="remember">
+                                <span class="checkmark"></span>
+                                Remember me
+                            </label>
+                            <a href="#" class="link-btn" onclick="switchView('forgot')">Forgot Password?</a>
+                        </div>
+                        <button type="submit" class="login-btn">
+                            <span>Sign In</span>
+                            <div class="btn-shine"></div>
+                        </button>
+                    </form>
+                    <div class="login-footer">
+                        <p>Don't have an account? <a href="#" onclick="switchView('signup')">Sign up</a></p>
+                    </div>
+                </div>
+
+                <div id="signup-view" class="view-section hidden">
+                    <div class="login-header">
+                        <h1>Create Account</h1>
+                        <p>Join Tempus today.</p>
+                    </div>
+                    <form id="signupForm" class="login-form">
+                        <div class="input-group">
+                            <input type="text" id="fullname" required placeholder=" ">
+                            <label for="fullname">Full Name</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="email" id="signup-email" required placeholder=" ">
+                            <label for="signup-email">Email Address</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="signup-password" required placeholder=" ">
+                            <label for="signup-password">Password</label>
+                            <span class="toggle-password" onclick="togglePassword('signup-password', this)">👁️</span>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="signup-confirm-password" required placeholder=" ">
+                            <label for="signup-confirm-password">Confirm Password</label>
+                            <span class="toggle-password"
+                                onclick="togglePassword('signup-confirm-password', this)">👁️</span>
+                        </div>
+                        <button type="submit" class="login-btn">
+                            <span>Sign Up</span>
+                            <div class="btn-shine"></div>
+                        </button>
+                    </form>
+                    <div class="login-footer">
+                        <p>Already have an account? <a href="#" onclick="switchView('login')">Log in</a></p>
+                    </div>
+                </div>
+
+                <div id="forgot-view" class="view-section hidden">
+                    <div class="login-header">
+                        <h1>Reset Password</h1>
+                        <p>Enter your email to receive recovery instructions.</p>
+                    </div>
+                    <form id="forgotForm" class="login-form">
+                        <div class="input-group">
+                            <input type="email" id="forgot-email" required placeholder=" ">
+                            <label for="forgot-email">Email Address</label>
+                        </div>
+                        <button type="submit" class="login-btn">
+                            <span>Send Link</span>
+                            <div class="btn-shine"></div>
+                        </button>
+                    </form>
+                    <div class="login-footer">
+                        <p>Remembered it? <a href="#" onclick="switchView('login')">Back to Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
