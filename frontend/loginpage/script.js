@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 localStorage.setItem('tempus_user', JSON.stringify(data.user));
+                localStorage.setItem('tempus_token', data.token);
                 window.location.href = '/dashboard';
             } else {
                 alert(data.error || 'Login failed');

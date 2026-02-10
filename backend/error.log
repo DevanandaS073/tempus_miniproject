@@ -1,0 +1,30 @@
+[2026-02-07T08:50:51.922Z] Login Error: PrismaClientKnownRequestError: 
+Invalid `prisma.users.findUnique()` invocation in
+C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\server.js:56:41
+
+  53 app.post('/api/auth/login', async (req, res) => {
+  54     const { email, password } = req.body;
+  55     try {
+→ 56         const user = await prisma.users.findUnique(
+Database `tempus_db` does not exist on the database server
+    at Vr.handleRequestError (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:65:8172)
+    at Vr.handleAndLogRequestError (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+    at Vr.request (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async a (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+    at async C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\server.js:56:22
+[2026-02-07T08:51:14.885Z] Login Error: PrismaClientKnownRequestError: 
+Invalid `prisma.users.findUnique()` invocation in
+C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\server.js:56:41
+
+  53 app.post('/api/auth/login', async (req, res) => {
+  54     const { email, password } = req.body;
+  55     try {
+→ 56         const user = await prisma.users.findUnique(
+Database `tempus_db` does not exist on the database server
+    at Vr.handleRequestError (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:65:8172)
+    at Vr.handleAndLogRequestError (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+    at Vr.request (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async a (C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+    at async C:\Users\USER\OneDrive\Desktop\tempus_miniproject\tempus_miniproject\backend\server.js:56:22
