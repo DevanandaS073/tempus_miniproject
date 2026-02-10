@@ -1,29 +1,27 @@
 const express = require('express');
 const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
-const { Pool } = require('pg');
-const { PrismaPg } = require('@prisma/adapter-pg');
+const prisma = require('./prismaClient'); // Use shared singleton
 const path = require('path');
 require('dotenv').config();
 
+// Routes
+const calendarRoutes = require('./routes/calendar');
+const eventsRoutes = require('./routes/events');
+
 const app = express();
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    if (req.method === 'POST') console.log('Body:', JSON.stringify(req.body, null, 2));
     next();
 });
 // CSP Middleware
 app.use((req, res, next) => {
     res.setHeader(
         "Content-Security-Policy",
-        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://ui-avatars.com;"
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://ui-avatars.com; connect-src 'self' ws: localhost:*;"
     );
     next();
 });
@@ -38,8 +36,15 @@ app.get('/', (req, res) => {
         }
     });
 });
+
+// Static Files
 app.use(express.static(path.join(__dirname, '../frontend/loginpage')));
 app.use('/dashboard', express.static(path.join(__dirname, '../frontend/dashboard')));
+app.use('/calendar', express.static(path.join(__dirname, '../frontend/calendar')));
+
+// API Routes
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/events', eventsRoutes);
 
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
@@ -87,8 +92,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         if (!user) {
             console.log(`Forgot password requested for non-existent email: ${email}`);
         } else {
-            console.log(`[MOCK EMAIL] Password reset link sent to: ${email}`);
-            console.log(`[MOCK TOKEN] https://tempus.com/reset-password?token=123456`);
+            // TODO: Integrate with real email service
+            console.log(`Password reset requested for: ${email}`);
         }
 
         res.json({ message: 'If an account exists, a reset link has been sent.' });
@@ -102,4 +107,5 @@ app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`- Login: http://localhost:${PORT}`);
     console.log(`- Dashboard: http://localhost:${PORT}/dashboard`);
+    console.log(`- Calendar: http://localhost:${PORT}/calendar`);
 });

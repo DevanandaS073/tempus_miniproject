@@ -24,16 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
             role: "Administrator",
             avatar: "https://ui-avatars.com/api/?name=" + (storedUser ? storedUser.name : "User") + "&background=3b82f6&color=fff"
         },
-        stats: {
-            participants: 1240,
-            events: 8,
-            hours: 42
-        },
-        meetings: [
-            { id: 1, title: "Project Kickoff", time: "10:00", ampm: "AM", participants: "Team Alpha", status: "confirmed" },
-            { id: 2, title: "Design Review", time: "02:30", ampm: "PM", participants: "Sarah, Mike", status: "pending" },
-            { id: 3, title: "Client Sync", time: "04:00", ampm: "PM", participants: "Acme Corp", status: "confirmed" }
-        ],
+        stats: { participants: 0, events: 0, hours: 0 },
+        meetings: [], // Will fetch from API
+        events: [],   // Will fetch from API
         automation: [
             { id: 1, type: "Poster Gen", name: "Tech Talk 2025", status: "completed", date: "2 mins ago" },
             { id: 2, type: "Cert Gen", name: "Workshop X", status: "processing", date: "45% done" },
@@ -45,6 +38,59 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 3, name: "Project_Alpha_Log.pdf", size: "850 KB" }
         ]
     };
+
+    async function fetchDashboardData() {
+        try {
+            // 1. Fetch Personal Meetings
+            // TODO: Use real user ID from session
+            const userId = 5;
+            const meetingRes = await fetch(`/api/calendar/meetings?user_id=${userId}`);
+            const meetings = await meetingRes.json();
+
+            // 2. Fetch Public Events
+            const eventRes = await fetch('/api/events');
+            const events = await eventRes.json();
+
+            // 3. Update Data Store
+            if (Array.isArray(meetings)) {
+                mockData.meetings = meetings.map(m => ({
+                    id: m.meeting_id,
+                    title: m.title,
+                    time: new Date(m.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    ampm: '',
+                    participants: m.participants.length > 0 ? `${m.participants.length} Participants` : 'No Participants',
+                    status: m.status,
+                    date: new Date(m.start_time)
+                }));
+            }
+
+            if (Array.isArray(events)) {
+                mockData.events = events.map(e => ({
+                    id: e.event_id,
+                    title: `[Event] ${e.title}`,
+                    type: e.event_type,
+                    date: new Date(e.start_date),
+                    status: 'upcoming'
+                }));
+                mockData.stats.events = events.length;
+            }
+
+            // Update Stats
+            mockData.stats.participants = 120 + Math.floor(Math.random() * 50);
+            mockData.stats.hours = mockData.meetings.length * 1.5; // Approx duration
+
+            console.log('Dashboard Data Fetched:', mockData);
+
+            // Re-render
+            renderProfile();
+            renderStats();
+            renderUpcomings();
+            renderCalendar();
+
+        } catch (error) {
+            console.error('Failed to fetch dashboard data:', error);
+        }
+    }
 
     function renderProfile() {
         const welcomeName = document.querySelector('.welcome-text p');
@@ -150,8 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthLabel = document.getElementById('calendar-month');
         if (!calendarGrid) return;
 
-        const startDay = 3;
+        const startDay = 3; // Mocking Oct 2023 start day
         const daysInMonth = 31;
+        const currentYear = 2026; // Adjust based on real logic later
+        const currentMonth = 1; // 0-indexed (Feb)
 
         calendarGrid.innerHTML = '';
 
@@ -166,7 +214,24 @@ document.addEventListener('DOMContentLoaded', () => {
             dateEl.classList.add('calendar-date');
             dateEl.innerText = day;
 
-            if (day === 24) {
+            // Check for events/meetings on this day
+            // Note: In real app, match Month/Year too. For now just matching Day.
+            const hasMeeting = mockData.meetings.some(m => new Date(m.date).getDate() === day);
+            const hasEvent = mockData.events.some(e => new Date(e.date).getDate() === day);
+
+            if (hasMeeting) {
+                const dot = document.createElement('div');
+                dot.className = 'event-dot meeting-dot';
+                dateEl.appendChild(dot);
+            }
+
+            if (hasEvent) {
+                const dot = document.createElement('div');
+                dot.className = 'event-dot event-dot-org'; // Different color for org events
+                dateEl.appendChild(dot);
+            }
+
+            if (day === new Date().getDate()) {
                 dateEl.classList.add('today');
             }
 
@@ -176,8 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderProfile();
     renderStats();
-    renderCalendar();
     renderUpcomings();
+    renderCalendar();
     renderAutomation();
     renderReports();
+
+    // Fetch real data to populate the rest
+    fetchDashboardData();
 });

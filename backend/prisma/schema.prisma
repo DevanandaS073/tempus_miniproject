@@ -6,12 +6,96 @@ datasource db {
   provider = "postgresql"
 }
 
+// --- User & Role Management (Placeholder for Team B) ---
+enum Role {
+  admin
+  manager
+  user
+}
+
 model users {
   id            Int      @id @default(autoincrement())
   name          String   @db.VarChar(100)
   email         String   @unique @db.VarChar(255)
   password_hash String
+  role          Role     @default(user)
+  department_id Int?     // For organizational events
   created_at    DateTime @default(now()) @db.Timestamp(6)
+  
+  calendar      calendars?
+  meetings_created meetings[] @relation("meeting_creator")
+  events_created   events[]   @relation("event_creator")
+  meeting_participations meeting_participants[]
+  event_participations   event_participants[]
+}
+
+// --- Calendar & Meeting Management (Team A) ---
+model calendars {
+  calendar_id Int     @id @default(autoincrement())
+  user_id     Int     @unique
+  user        users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  meetings    meetings[]
+}
+
+model meetings {
+  meeting_id   Int      @id @default(autoincrement())
+  calendar_id  Int
+  title        String   @db.VarChar(255)
+  description  String?  @db.Text
+  start_time   DateTime @db.Timestamp(6)
+  end_time     DateTime @db.Timestamp(6)
+  created_by   Int
+  status       String   @default("scheduled") @db.VarChar(50) // scheduled, cancelled, completed
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+
+  calendar     calendars @relation(fields: [calendar_id], references: [calendar_id], onDelete: Cascade)
+  creator      users     @relation("meeting_creator", fields: [created_by], references: [id])
+  participants meeting_participants[]
+}
+
+model meeting_participants {
+  id           Int      @id @default(autoincrement())
+  meeting_id   Int
+  user_id      Int
+  status       String   @default("pending") @db.VarChar(50) // pending, accepted, declined
+
+  meeting      meetings @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
+  user         users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([meeting_id, user_id])
+}
+
+// --- Event Management (Team A - Organizational) ---
+model events {
+  event_id      Int      @id @default(autoincrement())
+  department_id Int?     
+  title         String   @db.VarChar(255)
+  description   String?  @db.Text
+  event_type    String   @db.VarChar(100)
+  start_date    DateTime @db.Timestamp(6)
+  end_date      DateTime @db.Timestamp(6)
+  location      String?  @db.VarChar(255)
+  created_by    Int
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+
+  creator       users    @relation("event_creator", fields: [created_by], references: [id])
+  participants  event_participants[]
+  
+  // Relations for other teams
+  generated_posters generated_posters[]
+}
+
+model event_participants {
+  id            Int      @id @default(autoincrement())
+  event_id      Int
+  user_id       Int
+  status        String   @default("registered") @db.VarChar(50)
+
+  event         events   @relation(fields: [event_id], references: [event_id], onDelete: Cascade)
+  user          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_id, user_id])
 }
 
 model poster_templates {
@@ -37,6 +121,7 @@ model generated_posters {
   status       Status            @default(pending)
   
   template     poster_templates  @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  event        events            @relation(fields: [event_id], references: [event_id], onDelete: Cascade)
   
   @@index([event_id])
   @@index([template_id])

@@ -1,0 +1,82 @@
+/* Calendar Page Specific Styles */
+
+.full-height {
+    height: calc(100vh - 240px);
+    /* Adjust based on header height */
+}
+
+.calendar-full-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-full-card .card-body {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.split-view {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 32px;
+    height: 100%;
+}
+
+.calendar-wrapper.large {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.large-grid {
+    flex-grow: 1;
+    grid-template-rows: repeat(5, 1fr);
+    /* Ensure rows stretch */
+    gap: 8px;
+}
+
+.large-grid .calendar-date {
+    font-size: 1.1rem;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+    position: relative;
+    aspect-ratio: auto;
+}
+
+.large-grid .calendar-date:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.large-grid .calendar-date .event-dot {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    width: 8px;
+    height: 8px;
+    margin: 0;
+}
+
+/* If multiple dots, stack them */
+.dot-container {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.upcoming-sidebar {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 24px;
+    overflow-y: auto;
+}
+
+.upcoming-sidebar h3 {
+    margin-bottom: 16px;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+}
