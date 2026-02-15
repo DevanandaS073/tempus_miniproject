@@ -58,7 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 localStorage.setItem('tempus_user', JSON.stringify(data.user));
-                window.location.href = '/dashboard';
+                localStorage.setItem('tempus_token', data.token);
+                const selectedRole = localStorage.getItem('selectedRole') || 'WORKER';
+                if (selectedRole === 'ADMIN') {
+                    window.location.href = '/dashboard';
+                } else {
+                    window.location.href = '/worker-dashboard';
+                }
             } else {
                 alert(data.error || 'Login failed');
 
@@ -176,8 +182,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ── Role Selection ──
+function selectRole(role) {
+    localStorage.setItem('selectedRole', role);
+    switchView('login');
+}
+
 function switchView(viewName) {
-    const views = ['login', 'signup', 'forgot'];
+    const views = ['role', 'login', 'signup', 'forgot'];
 
     views.forEach(v => {
         const el = document.getElementById(`${v}-view`);
@@ -338,7 +350,7 @@ function initMascotEvents() {
     window.switchView = function (viewName) {
         mascotContainer.classList.add('hide');
         setTimeout(() => {
-            const views = ['login', 'signup', 'forgot'];
+            const views = ['role', 'login', 'signup', 'forgot'];
             views.forEach(v => {
                 const el = document.getElementById(`${v}-view`);
                 if (el) {

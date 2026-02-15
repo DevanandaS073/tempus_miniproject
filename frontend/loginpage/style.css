@@ -821,3 +821,54 @@ a {
     left: 50%;
     transform: translateX(-50%);
 }
+
+/* ── Role Selection ── */
+.role-selection {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.role-btn {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 2rem;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    max-width: 180px;
+}
+
+.role-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+}
+
+.role-icon {
+    font-size: 2rem;
+}
+
+.role-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.role-back-link {
+    color: var(--text-muted) !important;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.role-back-link:hover {
+    color: var(--primary-color) !important;
+}

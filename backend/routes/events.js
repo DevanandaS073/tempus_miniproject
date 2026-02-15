@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const eventsController = require('../controllers/eventsController');
+const { authenticateToken } = require('../middleware/authMiddleware');
 
 // Routes for /api/events
-router.get('/', eventsController.getEvents);       // Public
-router.post('/', eventsController.createEvent);    // Manager Only (Eventually)
-router.post('/join', eventsController.joinEvent);  // User action
+router.get('/', eventsController.getEvents);                          // Public
+router.post('/', authenticateToken, eventsController.createEvent);    // Protected
+router.post('/join', authenticateToken, eventsController.joinEvent);  // Protected
 
 module.exports = router;

@@ -32,7 +32,8 @@
                 <li><a href="#"><i class="fa-solid fa-robot"></i> Automation</a></li>
                 <li class="spacer"></li>
                 <li><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
-                <li><a href="/" class="logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a></li>
+                <li><a href="/" class="logout" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        Logout</a></li>
             </ul>
         </nav>
 
@@ -46,8 +47,8 @@
                 <div class="user-profile">
                     <img src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" alt="Avatar">
                     <div class="profile-info">
-                        <span class="name">John Doe</span>
-                        <span class="role">Administrator</span>
+                        <span class="name">User</span>
+                        <span class="role">Loading...</span>
                     </div>
                 </div>
 
@@ -58,7 +59,7 @@
                     </div>
                     <div class="notification-bell">
                         <i class="fa-regular fa-bell"></i>
-                        <span class="badge">3</span>
+                        <span class="badge">0</span>
                     </div>
                 </div>
             </header>
@@ -69,6 +70,8 @@
                     <div class="card-header">
                         <h3>My Schedule</h3>
                         <div class="header-actions-mini">
+                            <button class="btn-primary" id="add-event-btn"><i class="fa-solid fa-plus"></i> New
+                                Event</button>
                             <button class="btn-primary" id="add-meeting-btn"><i class="fa-solid fa-plus"></i> New
                                 Meeting</button>
                         </div>
@@ -104,7 +107,7 @@
     <!-- Add Meeting Modal -->
     <div id="meeting-modal" class="modal">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
+            <span class="close-modal" data-modal="meeting-modal">&times;</span>
             <h2>Schedule Meeting</h2>
             <form id="meeting-form">
                 <div class="form-group">
@@ -129,6 +132,77 @@
             </form>
         </div>
     </div>
+
+    <!-- Add Event Modal -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <!-- Step 1: Event Form -->
+            <div id="event-step-form">
+                <span class="close-modal" data-modal="event-modal">&times;</span>
+                <h2>Create Event</h2>
+                <form id="event-form">
+                    <div class="form-group">
+                        <label for="e-title">Title</label>
+                        <input type="text" id="e-title" required placeholder="e.g., Tech Summit 2026">
+                    </div>
+                    <div class="form-group">
+                        <label for="e-description">Description</label>
+                        <textarea id="e-description" rows="3" placeholder="Event description..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="e-type">Event Type</label>
+                        <select id="e-type">
+                            <option value="conference">Conference</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="seminar">Seminar</option>
+                            <option value="social">Social</option>
+                            <option value="training">Training</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="e-start-date">Start Date</label>
+                            <input type="datetime-local" id="e-start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="e-end-date">End Date</label>
+                            <input type="datetime-local" id="e-end-date" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="e-location">Location</label>
+                        <input type="text" id="e-location" placeholder="e.g., Main Hall, Building A">
+                    </div>
+                    <button type="submit" class="btn-primary">Create Event</button>
+                </form>
+            </div>
+
+            <!-- Step 2: Success + Actions -->
+            <div id="event-step-success" class="hidden">
+                <span class="close-modal" data-modal="event-modal">&times;</span>
+                <div class="success-view">
+                    <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <h2>Event Created!</h2>
+                    <p id="success-event-title" class="success-subtitle"></p>
+                    <div class="action-buttons">
+                        <button class="action-card" id="btn-create-poster">
+                            <i class="fa-solid fa-image"></i>
+                            <span>Create Poster</span>
+                            <small>Design an event poster</small>
+                        </button>
+                        <button class="action-card" id="btn-generate-cert">
+                            <i class="fa-solid fa-certificate"></i>
+                            <span>Generate Certificate</span>
+                            <small>Coming soon</small>
+                        </button>
+                    </div>
+                    <button class="btn-secondary" id="btn-close-success">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 
