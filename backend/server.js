@@ -39,7 +39,17 @@ app.get('/', (req, res) => {
 
 // Static Files
 app.use(express.static(path.join(__dirname, '../frontend/loginpage')));
+
+// Dashboard routes (serve index.html for root paths)
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dashboard/index.html'));
+});
+app.get('/worker-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/worker-dashboard/index.html'));
+});
+
 app.use('/dashboard', express.static(path.join(__dirname, '../frontend/dashboard')));
+app.use('/worker-dashboard', express.static(path.join(__dirname, '../frontend/worker-dashboard')));
 app.use('/calendar', express.static(path.join(__dirname, '../frontend/calendar')));
 
 // API Routes
@@ -59,7 +69,18 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        res.json({ message: 'Login successful', user: { id: user.id, name: user.name } });
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.json({
+            message: 'Login successful',
+            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            token
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Internal server error' });

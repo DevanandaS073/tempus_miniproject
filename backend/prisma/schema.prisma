@@ -8,9 +8,8 @@ datasource db {
 
 // --- User & Role Management (Placeholder for Team B) ---
 enum Role {
-  admin
-  manager
-  user
+  ADMIN
+  WORKER
 }
 
 model users {
@@ -18,7 +17,7 @@ model users {
   name          String   @db.VarChar(100)
   email         String   @unique @db.VarChar(255)
   password_hash String
-  role          Role     @default(user)
+  role          Role     @default(WORKER)
   department_id Int?     // For organizational events
   created_at    DateTime @default(now()) @db.Timestamp(6)
   

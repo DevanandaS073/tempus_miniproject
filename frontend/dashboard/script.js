@@ -42,9 +42,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchDashboardData() {
         try {
             // 1. Fetch Personal Meetings
-            // TODO: Use real user ID from session
-            const userId = 5;
-            const meetingRes = await fetch(`/api/calendar/meetings?user_id=${userId}`);
+            const token = localStorage.getItem('tempus_token');
+            if (!token) {
+                window.location.href = '/'; // Redirect if no token
+                return;
+            }
+
+            const meetingRes = await fetch(`/api/calendar/meetings`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const meetings = await meetingRes.json();
 
             // 2. Fetch Public Events

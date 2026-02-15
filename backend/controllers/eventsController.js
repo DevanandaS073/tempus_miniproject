@@ -24,9 +24,8 @@ const getEvents = async (req, res) => {
 // Create a new organizational event (Manager Only - Simplified for now)
 const createEvent = async (req, res) => {
     try {
-        const { title, description, event_type, start_date, end_date, location, created_by } = req.body;
-
-        // TODO: Role Check (Manager Only) - Team B will implement middleware
+        const { title, description, event_type, start_date, end_date, location } = req.body;
+        const created_by = req.user.id; // From JWT
 
         const newEvent = await prisma.events.create({
             data: {
@@ -36,7 +35,7 @@ const createEvent = async (req, res) => {
                 start_date: new Date(start_date),
                 end_date: new Date(end_date),
                 location,
-                created_by: created_by || 1 // Default to admin/test user
+                created_by
             }
         });
 
@@ -50,7 +49,8 @@ const createEvent = async (req, res) => {
 // User "Joins" an event (Adds to their calendar)
 const joinEvent = async (req, res) => {
     try {
-        const { event_id, user_id } = req.body;
+        const { event_id } = req.body;
+        const user_id = req.user.id; // From JWT
 
         // 1. Register logic (Optional: Event Participants table)
         // await prisma.event_participants.create(...)
@@ -59,7 +59,7 @@ const joinEvent = async (req, res) => {
         const event = await prisma.events.findUnique({ where: { event_id: parseInt(event_id) } });
         if (!event) return res.status(404).json({ error: 'Event not found' });
 
-        let calendar = await prisma.calendars.findUnique({ where: { user_id: user_id || 1 } });
+        let calendar = await prisma.calendars.findUnique({ where: { user_id: user_id } });
 
         const meeting = await prisma.meetings.create({
             data: {
@@ -68,7 +68,7 @@ const joinEvent = async (req, res) => {
                 description: event.description,
                 start_time: event.start_date,
                 end_time: event.end_date,
-                created_by: user_id || 1,
+                created_by: user_id,
                 status: 'scheduled'
             }
         });

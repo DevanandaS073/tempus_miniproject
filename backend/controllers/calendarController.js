@@ -3,9 +3,7 @@ const prisma = require('../prismaClient');
 // Get all meetings for a user (Personal Calendar)
 const getMeetings = async (req, res) => {
     try {
-        // TODO: In real app, get user_id from req.user (Auth Token)
-        // For now, we'll accept user_id in query or body for testing
-        const userId = parseInt(req.query.user_id) || 1;
+        const userId = req.user.id; // From JWT
 
         // Ensure user has a calendar
         let calendar = await prisma.calendars.findUnique({
@@ -32,8 +30,8 @@ const getMeetings = async (req, res) => {
 // Create a new meeting
 const createMeeting = async (req, res) => {
     try {
-        const { title, start_time, end_time, user_id } = req.body;
-        const userId = user_id || 1; // Default for testing
+        const { title, start_time, end_time } = req.body;
+        const userId = req.user.id; // From JWT
 
         // 1. Get User's Calendar
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });

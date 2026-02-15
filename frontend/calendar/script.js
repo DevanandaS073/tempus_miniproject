@@ -10,9 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 1. Fetch Data ---
     async function fetchCalendarData() {
         try {
-            const userId = 5;
+            const token = localStorage.getItem('tempus_token');
+            if (!token) return window.location.href = '/';
+
             const [meetingsRes, eventsRes] = await Promise.all([
-                fetch(`/api/calendar/meetings?user_id=${userId}`),
+                fetch(`/api/calendar/meetings`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch('/api/events')
             ]);
 
@@ -139,11 +141,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const end = new Date(start.getTime() + duration * 3600000);
 
             try {
+                const token = localStorage.getItem('tempus_token');
                 const res = await fetch('/api/calendar/meetings', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
-                        title, start_time: start, end_time: end, user_id: 5
+                        title, start_time: start, end_time: end
                     })
                 });
 

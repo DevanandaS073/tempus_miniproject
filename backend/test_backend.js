@@ -21,7 +21,7 @@ const start = async () => {
                     name: 'Test User',
                     email: 'test@tempus.com',
                     password_hash: 'hashed_password',
-                    role: 'user'
+                    role: 'WORKER'
                 }
             });
             console.log('✅ Created Test User:', user.id);

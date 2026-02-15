@@ -37,7 +37,24 @@
             </div>
 
             <div class="login-card">
-                <div id="login-view" class="view-section active">
+                <div id="role-view" class="view-section active">
+                    <div class="login-header">
+                        <h1>Tempus</h1>
+                        <p>Choose how you'd like to proceed.</p>
+                    </div>
+                    <div class="role-selection">
+                        <button class="role-btn" onclick="selectRole('ADMIN')">
+                            <span class="role-icon">🛡️</span>
+                            <span class="role-label">Administrator</span>
+                        </button>
+                        <button class="role-btn" onclick="selectRole('WORKER')">
+                            <span class="role-icon">👤</span>
+                            <span class="role-label">Worker</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="login-view" class="view-section hidden">
                     <div class="login-header">
                         <h1>Tempus</h1>
                         <p>Welcome back! Please login to your account.</p>
@@ -67,6 +84,8 @@
                     </form>
                     <div class="login-footer">
                         <p>Don't have an account? <a href="#" onclick="switchView('signup')">Sign up</a></p>
+                        <p style="margin-top: 0.5rem"><a href="#" class="role-back-link" onclick="switchView('role')">←
+                                Back to role selection</a></p>
                     </div>
                 </div>
 
