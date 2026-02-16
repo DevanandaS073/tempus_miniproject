@@ -58,11 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 localStorage.setItem('tempus_user', JSON.stringify(data.user));
-<<<<<<< HEAD
-                localStorage.setItem('tempus_token', data.token); // Store JWT
-=======
                 localStorage.setItem('tempus_token', data.token);
->>>>>>> origin/GouthamSanthosh
                 const selectedRole = localStorage.getItem('selectedRole') || 'WORKER';
                 if (selectedRole === 'ADMIN') {
                     window.location.href = '/dashboard';
