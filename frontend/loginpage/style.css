@@ -826,35 +826,16 @@ a {
 .role-selection {
     display: flex;
     gap: 1rem;
-<<<<<<< HEAD
-    margin-top: 1.5rem;
-}
-
-.role-btn {
-    flex: 1;
-=======
     justify-content: center;
     margin-top: 1rem;
 }
 
 .role-btn {
     pointer-events: auto;
->>>>>>> origin/GouthamSanthosh
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.75rem;
-<<<<<<< HEAD
-    padding: 1.5rem 1rem;
-    background: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    color: var(--text-main);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    user-select: auto;
-    pointer-events: auto;
-=======
     padding: 1.5rem 2rem;
     background: var(--input-bg);
     border: 1px solid var(--border-color);
@@ -864,23 +845,14 @@ a {
     transition: all 0.3s ease;
     flex: 1;
     max-width: 180px;
->>>>>>> origin/GouthamSanthosh
 }
 
 .role-btn:hover {
     border-color: var(--primary-color);
-<<<<<<< HEAD
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-    transform: translateY(-4px);
-}
-
-.role-btn:active {
-    transform: translateY(0);
-=======
+    border-color: var(--primary-color);
     background: rgba(59, 130, 246, 0.1);
     transform: translateY(-4px);
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
->>>>>>> origin/GouthamSanthosh
 }
 
 .role-icon {
@@ -888,23 +860,6 @@ a {
 }
 
 .role-label {
-<<<<<<< HEAD
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.role-back-link {
-    user-select: auto;
-    pointer-events: auto;
-    color: var(--primary-color);
-    text-decoration: none;
-    cursor: pointer;
-    font-size: 0.95rem;
-}
-
-.role-back-link:hover {
-    text-decoration: underline;
-=======
     font-weight: 600;
     font-size: 0.95rem;
 }
@@ -917,5 +872,4 @@ a {
 
 .role-back-link:hover {
     color: var(--primary-color) !important;
->>>>>>> origin/GouthamSanthosh
 }

@@ -43,18 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Fetch Data ──
     async function fetchCalendarData() {
         try {
-<<<<<<< HEAD
-            const token = localStorage.getItem('tempus_token');
-            if (!token) return window.location.href = '/';
-
-            const [meetingsRes, eventsRes] = await Promise.all([
-                fetch(`/api/calendar/meetings`, { headers: { 'Authorization': `Bearer ${token}` } }),
-=======
             const [meetingsRes, eventsRes] = await Promise.all([
                 fetch('/api/calendar/meetings', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }),
->>>>>>> origin/GouthamSanthosh
                 fetch('/api/events')
             ]);
 
@@ -243,13 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-<<<<<<< HEAD
-                    body: JSON.stringify({
-                        title, start_time: start, end_time: end
-                    })
-=======
                     body: JSON.stringify({ title, start_time: start, end_time: end })
->>>>>>> origin/GouthamSanthosh
                 });
 
                 if (res.ok) {

@@ -40,19 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchDashboardData() {
         try {
-<<<<<<< HEAD
-            // 1. Fetch Personal Meetings
-            const token = localStorage.getItem('tempus_token');
-            if (!token) {
-                window.location.href = '/'; // Redirect if no token
-                return;
-            }
-
-            const meetingRes = await fetch(`/api/calendar/meetings`, {
-=======
             // 1. Fetch Personal Meetings (JWT provides user identity)
             const meetingRes = await fetch('/api/calendar/meetings', {
->>>>>>> origin/GouthamSanthosh
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const meetings = await meetingRes.json();
