@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Certificate Generator - Create Custom Templates</title>
+    <meta name="description" content="Generate custom certificate templates using AI and populate them with CSV data">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header fade-in">
+            <h1 class="gradient-text">AI Certificate Generator</h1>
+            <p>Create custom certificate templates using AI, then generate certificates from CSV data</p>
+        </header>
+
+        <!-- API Configuration Section -->
+        <section id="api-config-section" class="section fade-in">
+            <h2 class="section-title">⚙️ Step 1: Configure AI</h2>
+            <div id="api-status" class="mb-md">
+                <p style="color: var(--text-muted);">Status: <span id="config-status">Not configured</span></p>
+            </div>
+
+            <div class="flex gap-md" style="flex-wrap: wrap;">
+                <input type="password" id="api-key-input" placeholder="Enter your Google Gemini API key"
+                    style="flex: 1; min-width: 300px; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--surface-border); background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-body);">
+                <button class="btn btn-primary" onclick="configureAPI()">💾 Save API Key</button>
+                <button class="btn btn-secondary" onclick="testAPIConnection()">🔌 Test Connection</button>
+            </div>
+
+            <div class="mt-md"
+                style="padding: var(--space-md); background: var(--bg-elevated); border-radius: var(--radius-md); border-left: 4px solid var(--accent);">
+                <h4 style="margin-bottom: var(--space-sm); color: var(--text-primary);">🔑 How to get your API key:</h4>
+                <ol style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                    <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                            style="color: var(--secondary);">Google AI Studio</a></li>
+                    <li>Sign in with your Google account</li>
+                    <li>Click "Get API Key" → "Create API key"</li>
+                    <li>Copy the key and paste it above</li>
+                </ol>
+                <p style="margin-top: var(--space-sm); font-size: 0.85rem; color: var(--text-muted);">
+                    <strong>Note:</strong> Your API key is stored locally in your browser and is only sent to Google's
+                    Gemini API.</p>
+            </div>
+        </section>
+
+        <!-- Asset Upload Section -->
+        <section id="asset-section" class="section fade-in">
+            <h2 class="section-title">📁 Step 2: Upload Assets (Optional)</h2>
+            <p style="color: var(--text-muted); margin-bottom: var(--space-lg);">Upload logos, signatures, or
+                backgrounds that AI can incorporate into your certificate design.</p>
+
+            <div class="card-grid">
+                <!-- Logo Upload -->
+                <div class="card">
+                    <h3 class="card-title">🏢 Logos</h3>
+                    <p class="card-description">Company or organization logos</p>
+                    <input type="file" id="logo-upload" accept="image/*" class="file-input"
+                        onchange="handleAssetUpload(event, 'logos')">
+                    <button class="btn btn-secondary" onclick="document.getElementById('logo-upload').click()">+ Upload
+                        Logo</button>
+                    <div id="logos-gallery" class="asset-gallery mt-md"></div>
+                </div>
+
+                <!-- Signature Upload -->
+                <div class="card">
+                    <h3 class="card-title">✍️ Signatures</h3>
+                    <p class="card-description">Instructor or official signatures</p>
+                    <input type="file" id="signature-upload" accept="image/*" class="file-input"
+                        onchange="handleAssetUpload(event, 'signatures')">
+                    <button class="btn btn-secondary" onclick="document.getElementById('signature-upload').click()">+
+                        Upload Signature</button>
+                    <div id="signatures-gallery" class="asset-gallery mt-md"></div>
+                </div>
+
+                <!-- Background Upload -->
+                <div class="card">
+                    <h3 class="card-title">🎨 Backgrounds</h3>
+                    <p class="card-description">Background images or patterns</p>
+                    <input type="file" id="background-upload" accept="image/*" class="file-input"
+                        onchange="handleAssetUpload(event, 'backgrounds')">
+                    <button class="btn btn-secondary" onclick="document.getElementById('background-upload').click()">+
+                        Upload Background</button>
+                    <div id="backgrounds-gallery" class="asset-gallery mt-md"></div>
+                </div>
+            </div>
+
+            <div class="text-center mt-lg">
+                <button class="btn btn-secondary" onclick="clearAllAssets()">🗑 Clear All Assets</button>
+            </div>
+        </section>
+
+        <!-- AI Template Generation Section -->
+        <section id="ai-generation-section" class="section fade-in">
+            <h2 class="section-title">🤖 Step 3: Generate Template with AI</h2>
+            <p style="color: var(--text-muted); margin-bottom: var(--space-lg);">Describe your certificate scenario and
+                let AI create a custom template for you.</p>
+
+            <div style="margin-bottom: var(--space-lg);">
+                <label for="scenario-input"
+                    style="display: block; margin-bottom: var(--space-sm); font-weight: 600; color: var(--text-primary);">Certificate
+                    Scenario:</label>
+                <textarea id="scenario-input" rows="4"
+                    placeholder="Example: Professional certificate for cybersecurity training completion with company logo and formal blue design"
+                    style="width: 100%; padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--surface-border); background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-body); resize: vertical;"></textarea>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: var(--space-xs);">Be specific about
+                    style, colors, and design elements you want.</p>
+            </div>
+
+            <div class="flex gap-md mb-lg flex-center">
+                <button id="generate-template-btn" class="btn btn-primary" onclick="generateAITemplate()" disabled>✨
+                    Generate Certificate Template</button>
+                <button id="refine-template-btn" class="btn btn-secondary hidden" onclick="showRefineDialog()">🔧 Refine
+                    Template</button>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="ai-loading" class="hidden" style="text-align: center; padding: var(--space-xl);">
+                <div class="spinner"></div>
+                <p style="margin-top: var(--space-md); color: var(--text-secondary);">AI is generating your certificate
+                    template...</p>
+            </div>
+
+            <!-- Template Preview -->
+            <div id="template-preview-container" class="hidden">
+                <h3 style="margin-bottom: var(--space-md);">Preview:</h3>
+                <div id="template-preview"
+                    style="background: white; border-radius: var(--radius-md); padding: var(--space-md); box-shadow: var(--shadow-xl); overflow: auto; max-width: 100%;">
+                </div>
+                <div class="text-center mt-md">
+                    <button class="btn btn-success" onclick="acceptTemplate()">✅ Use This Template</button>
+                    <button class="btn btn-secondary" onclick="regenerateTemplate()">🔄 Try Again</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CSV Upload Section -->
+        <section id="upload-section" class="section fade-in hidden">
+            <h2 class="section-title">📊 Step 4: Upload CSV File</h2>
+
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📄</div>
+                <p class="upload-text">Drag and drop your CSV file here</p>
+                <p class="upload-subtext">or click to browse</p>
+                <input type="file" id="csv-file" class="file-input" accept=".csv" onchange="handleFileSelect(event)">
+            </div>
+
+            <div id="file-info" class="file-info hidden">
+                <span class="file-info-icon">✓</span>
+                <div>
+                    <strong id="file-name"></strong>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        <span id="file-rows"></span> rows found
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample CSV Info -->
+            <div
+                style="margin-top: var(--space-lg); padding: var(--space-md); background: var(--bg-elevated); border-radius: var(--radius-md); border-left: 4px solid var(--accent);">
+                <h4 style="margin-bottom: var(--space-sm); color: var(--text-primary);">📋 CSV Format Requirements</h4>
+                <p style="margin-bottom: var(--space-sm); font-size: 0.9rem;">Your CSV should include these columns:</p>
+                <code
+                    style="display: block; background: var(--bg-primary); padding: var(--space-sm); border-radius: var(--radius-sm); color: var(--secondary); font-size: 0.85rem;">
+          name,course,date,instructor,achievement
+        </code>
+                <button class="btn btn-secondary mt-md" onclick="downloadSampleCSV()">⬇ Download Sample CSV</button>
+            </div>
+
+            <!-- Data Preview -->
+            <div id="data-preview" class="data-preview hidden">
+                <h3 style="padding: var(--space-md); margin: 0; background: var(--bg-elevated);">Data Preview</h3>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="data-table" id="preview-table">
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="text-center mt-lg">
+                <button id="generate-btn" class="btn btn-success" onclick="generateCertificates()" disabled>
+                    🎓 Generate Certificates
+                </button>
+            </div>
+        </section>
+
+        <!-- Certificates Display Section -->
+        <section id="certificates-section" class="section hidden">
+            <h2 class="section-title">Generated Certificates</h2>
+            <p style="color: var(--text-muted); margin-bottom: var(--space-lg);">
+                <span id="cert-count">0</span> certificates generated. You can print or save as PDF using your browser's
+                print function.
+            </p>
+
+            <div class="flex gap-md mb-lg">
+                <button class="btn btn-primary" onclick="window.print()">🖨 Print All Certificates</button>
+                <button class="btn btn-secondary" onclick="resetApp()">🔄 Generate New Batch</button>
+            </div>
+
+            <div id="certificates-container" class="certificates-container">
+                <!-- Generated certificates will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Refinement Modal -->
+        <div id="refine-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Refine Template</h3>
+                <textarea id="refinement-input" rows="3" placeholder="Describe what you'd like to change..."></textarea>
+                <div class="flex gap-md mt-md">
+                    <button class="btn btn-primary" onclick="refineTemplate()">Apply Changes</button>
+                    <button class="btn btn-secondary" onclick="closeRefineDialog()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="ai-generator.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
