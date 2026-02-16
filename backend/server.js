@@ -45,12 +45,9 @@ app.get('/dashboard', (req, res) => {
 app.get('/worker-dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/worker-dashboard/index.html'));
 });
-<<<<<<< HEAD
-=======
 app.get('/poster-gen', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/poster-gen/index.html'));
 });
->>>>>>> origin/GouthamSanthosh
 
 app.use('/dashboard', express.static(path.join(__dirname, '../frontend/dashboard')));
 app.use('/worker-dashboard', express.static(path.join(__dirname, '../frontend/worker-dashboard')));
@@ -74,16 +71,9 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-<<<<<<< HEAD
-        const jwt = require('jsonwebtoken');
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-=======
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET || 'tempus-secret-key',
->>>>>>> origin/GouthamSanthosh
             { expiresIn: '1h' }
         );
 
