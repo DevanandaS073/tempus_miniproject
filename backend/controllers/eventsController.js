@@ -25,9 +25,6 @@ const getEvents = async (req, res) => {
 const createEvent = async (req, res) => {
     try {
         const { title, description, event_type, start_date, end_date, location } = req.body;
-<<<<<<< HEAD
-        const created_by = req.user.id; // From JWT
-=======
         const userId = req.user.id;
         const startDt = new Date(start_date);
         const endDt = new Date(end_date);
@@ -40,7 +37,6 @@ const createEvent = async (req, res) => {
                 end_date: { gt: startDt }
             }
         });
->>>>>>> origin/GouthamSanthosh
 
         if (eventConflict) {
             return res.status(409).json({
@@ -77,11 +73,7 @@ const createEvent = async (req, res) => {
                 start_date: startDt,
                 end_date: endDt,
                 location,
-<<<<<<< HEAD
-                created_by
-=======
                 created_by: userId
->>>>>>> origin/GouthamSanthosh
             }
         });
 
@@ -96,23 +88,15 @@ const createEvent = async (req, res) => {
 const joinEvent = async (req, res) => {
     try {
         const { event_id } = req.body;
-<<<<<<< HEAD
-        const user_id = req.user.id; // From JWT
-=======
         const userId = req.user.id;
->>>>>>> origin/GouthamSanthosh
 
         // 1. Find the event
         const event = await prisma.events.findUnique({ where: { event_id: parseInt(event_id) } });
         if (!event) return res.status(404).json({ error: 'Event not found' });
 
-<<<<<<< HEAD
-        let calendar = await prisma.calendars.findUnique({ where: { user_id: user_id } });
-=======
         // 2. Get user's calendar
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
         if (!calendar) calendar = await prisma.calendars.create({ data: { user_id: userId } });
->>>>>>> origin/GouthamSanthosh
 
         // 3. Conflict Check — against meetings in user's calendar
         const meetingConflict = await prisma.meetings.findFirst({
@@ -138,11 +122,7 @@ const joinEvent = async (req, res) => {
                 description: event.description,
                 start_time: event.start_date,
                 end_time: event.end_date,
-<<<<<<< HEAD
-                created_by: user_id,
-=======
                 created_by: userId,
->>>>>>> origin/GouthamSanthosh
                 status: 'scheduled'
             }
         });
