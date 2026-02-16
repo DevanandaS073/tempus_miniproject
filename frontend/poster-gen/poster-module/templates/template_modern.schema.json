@@ -1,0 +1,189 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "id": "modern",
+    "name": "Modern Template",
+    "templateId": "modern",
+    "templateName": "Modern Template",
+    "version": "2.0.0",
+    "description": "Hierarchical poster layout with strong visual hierarchy - hero, subtitle, info card, body, and CTA",
+    "layout": {
+        "type": "flexbox",
+        "direction": "column",
+        "justify": "space-between",
+        "width": "800px",
+        "height": "1200px",
+        "padding": "var(--space-8)"
+    },
+    "zones": {
+        "hero": {
+            "type": "hero",
+            "display": "flex",
+            "flexDirection": "column",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "textAlign": "center",
+            "maxCharacters": 80,
+            "description": "Primary event title with large typography"
+        },
+        "subtitle": {
+            "type": "subtitle",
+            "display": "flex",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "textAlign": "center",
+            "maxCharacters": 120,
+            "description": "Secondary tagline or subtitle"
+        },
+        "meta": {
+            "type": "info-card",
+            "display": "grid",
+            "gridTemplateColumns": "repeat(auto-fit, minmax(200px, 1fr))",
+            "gap": "var(--space-4)",
+            "padding": "var(--space-6)",
+            "maxItems": 3,
+            "description": "Event metadata card (date, time, location)"
+        },
+        "body": {
+            "type": "body",
+            "display": "flex",
+            "flexDirection": "column",
+            "justifyContent": "flex-start",
+            "padding": "var(--space-6)",
+            "maxCharacters": 500,
+            "maxLines": 12,
+            "description": "Event description and details"
+        },
+        "cta": {
+            "type": "cta",
+            "display": "flex",
+            "justifyContent": "center",
+            "alignItems": "center",
+            "description": "Call-to-action button"
+        },
+        "footer": {
+            "type": "footer",
+            "display": "flex",
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "alignItems": "center",
+            "textAlign": "center",
+            "padding": "var(--space-4)",
+            "maxItems": 3,
+            "description": "Footer information (website, contact, etc.)"
+        }
+    },
+    "contentRules": {
+        "title": {
+            "required": true,
+            "minCharacters": 3,
+            "maxCharacters": 80,
+            "allowLineBreaks": true,
+            "maxLines": 3,
+            "overflow": "ellipsis"
+        },
+        "subtitle": {
+            "required": false,
+            "maxCharacters": 120,
+            "allowLineBreaks": false,
+            "overflow": "ellipsis"
+        },
+        "meta": {
+            "required": false,
+            "maxItems": 3,
+            "itemFormat": "structured",
+            "allowIcons": false
+        },
+        "body": {
+            "required": false,
+            "minCharacters": 0,
+            "maxCharacters": 500,
+            "allowLineBreaks": true,
+            "maxLines": 12,
+            "overflow": "scroll"
+        },
+        "cta": {
+            "required": false,
+            "type": "button",
+            "defaultText": "Register Now"
+        },
+        "footer": {
+            "required": false,
+            "maxItems": 3,
+            "itemFormat": "short",
+            "allowIcons": false
+        }
+    },
+    "alignmentRules": {
+        "hero": {
+            "horizontal": "center",
+            "vertical": "center",
+            "textAlign": "center"
+        },
+        "subtitle": {
+            "horizontal": "center",
+            "vertical": "center",
+            "textAlign": "center"
+        },
+        "meta": {
+            "horizontal": "center",
+            "vertical": "start",
+            "textAlign": "center",
+            "itemSpacing": "var(--space-4)"
+        },
+        "body": {
+            "horizontal": "start",
+            "vertical": "start",
+            "textAlign": "left",
+            "lineHeight": "var(--line-height-relaxed)"
+        },
+        "cta": {
+            "horizontal": "center",
+            "vertical": "center"
+        },
+        "footer": {
+            "horizontal": "space-between",
+            "vertical": "center",
+            "textAlign": "center",
+            "itemSpacing": "var(--space-3)"
+        }
+    },
+    "layoutConstraints": {
+        "minWidth": "600px",
+        "maxWidth": "1200px",
+        "aspectRatio": "2:3",
+        "responsive": true,
+        "responsiveBreakpoints": {
+            "mobile": "600px",
+            "tablet": "800px",
+            "desktop": "1200px"
+        }
+    },
+    "accessibility": {
+        "semanticStructure": {
+            "hero": "section[h1]",
+            "subtitle": "section[p]",
+            "meta": "section",
+            "body": "article",
+            "cta": "section[button]",
+            "footer": "footer"
+        },
+        "ariaLabels": {
+            "hero": "Event Title",
+            "subtitle": "Event Subtitle",
+            "meta": "Event Information",
+            "body": "Event Description",
+            "cta": "Call to Action",
+            "footer": "Additional Information"
+        },
+        "focusManagement": {
+            "tabOrder": [
+                "hero",
+                "subtitle",
+                "meta",
+                "body",
+                "cta",
+                "footer"
+            ]
+        }
+    }
+}

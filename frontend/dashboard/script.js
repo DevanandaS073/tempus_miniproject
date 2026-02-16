@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Dashboard Loaded');
+
+
+    // ── Auth Check ──
+    const token = localStorage.getItem('tempus_token');
+    if (!token) {
+        window.location.href = '/';
+        return;
+    }
 
     function randomizeBlobs() {
         const blobs = document.querySelectorAll('.blob');
@@ -20,27 +27,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mockData = {
         user: {
-            name: storedUser ? storedUser.name : "John Doe",
-            role: "Administrator",
+            name: storedUser ? storedUser.name : "User",
+            role: storedUser ? storedUser.role : "user",
             avatar: "https://ui-avatars.com/api/?name=" + (storedUser ? storedUser.name : "User") + "&background=3b82f6&color=fff"
         },
-        stats: { participants: 0, events: 0, hours: 0 },
-        meetings: [], // Will fetch from API
-        events: [],   // Will fetch from API
-        automation: [
-            { id: 1, type: "Poster Gen", name: "Tech Talk 2025", status: "completed", date: "2 mins ago" },
-            { id: 2, type: "Cert Gen", name: "Workshop X", status: "processing", date: "45% done" },
-            { id: 3, type: "Report", name: "Monthly Sync", status: "failed", date: "Retry needed" }
-        ],
-        reports: [
-            { id: 1, name: "Weekly_Summary_Oct.pdf", size: "1.2 MB" },
-            { id: 2, name: "Event_Q3_Stats.pdf", size: "3.4 MB" },
-            { id: 3, name: "Project_Alpha_Log.pdf", size: "850 KB" }
-        ]
+        stats: { meetings: 0, events: 0, hours: 0 },
+        meetings: [],
+        events: [],
+        automation: [],
+        reports: []
     };
 
     async function fetchDashboardData() {
         try {
+<<<<<<< HEAD
             // 1. Fetch Personal Meetings
             const token = localStorage.getItem('tempus_token');
             if (!token) {
@@ -49,6 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const meetingRes = await fetch(`/api/calendar/meetings`, {
+=======
+            // 1. Fetch Personal Meetings (JWT provides user identity)
+            const meetingRes = await fetch('/api/calendar/meetings', {
+>>>>>>> origin/GouthamSanthosh
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const meetings = await meetingRes.json();
@@ -68,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     status: m.status,
                     date: new Date(m.start_time)
                 }));
+                mockData.stats.meetings = meetings.length;
             }
 
             if (Array.isArray(events)) {
@@ -82,10 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Update Stats
-            mockData.stats.participants = 120 + Math.floor(Math.random() * 50);
             mockData.stats.hours = mockData.meetings.length * 1.5; // Approx duration
 
-            console.log('Dashboard Data Fetched:', mockData);
+
 
             // Re-render
             renderProfile();
@@ -107,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mockData.user) {
             if (welcomeName) welcomeName.innerHTML = `Welcome back,<br>${mockData.user.name.split(' ')[0].toUpperCase()}`;
             if (profileName) profileName.innerText = mockData.user.name.toUpperCase();
-            if (profileRole) profileRole.innerText = mockData.user.role;
+            if (profileRole) profileRole.innerText = mockData.user.role.charAt(0).toUpperCase() + mockData.user.role.slice(1);
             if (profileImg) profileImg.src = mockData.user.avatar;
         }
     }
@@ -117,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const eCount = document.getElementById('stat-events');
         const hCount = document.getElementById('stat-hours');
 
-        if (pCount) pCount.innerText = mockData.stats.participants.toLocaleString();
+        if (pCount) pCount.innerText = mockData.stats.meetings;
         if (eCount) eCount.innerText = mockData.stats.events;
         if (hCount) hCount.innerText = `${mockData.stats.hours}h`;
     }
@@ -197,19 +201,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // State
+    let currentViewDate = new Date();
+
     function renderCalendar() {
         const calendarGrid = document.getElementById('calendar-dates');
         const monthLabel = document.getElementById('calendar-month');
-        if (!calendarGrid) return;
+        if (!calendarGrid || !monthLabel) return;
 
-        const startDay = 3; // Mocking Oct 2023 start day
-        const daysInMonth = 31;
-        const currentYear = 2026; // Adjust based on real logic later
-        const currentMonth = 1; // 0-indexed (Feb)
+        const year = currentViewDate.getFullYear();
+        const month = currentViewDate.getMonth();
+
+        monthLabel.innerText = currentViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
         calendarGrid.innerHTML = '';
 
-        for (let i = 0; i < startDay; i++) {
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDayOfMonth; i++) {
             const empty = document.createElement('div');
             empty.classList.add('calendar-date', 'empty');
             calendarGrid.appendChild(empty);
@@ -218,31 +228,62 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let day = 1; day <= daysInMonth; day++) {
             const dateEl = document.createElement('div');
             dateEl.classList.add('calendar-date');
-            dateEl.innerText = day;
 
-            // Check for events/meetings on this day
-            // Note: In real app, match Month/Year too. For now just matching Day.
-            const hasMeeting = mockData.meetings.some(m => new Date(m.date).getDate() === day);
-            const hasEvent = mockData.events.some(e => new Date(e.date).getDate() === day);
+            let html = `<span class="date-num">${day}</span>`;
 
-            if (hasMeeting) {
-                const dot = document.createElement('div');
-                dot.className = 'event-dot meeting-dot';
-                dateEl.appendChild(dot);
+            const checkItemDate = (dateObj) => {
+                return dateObj && dateObj.getDate() === day && dateObj.getMonth() === month && dateObj.getFullYear() === year;
             }
 
-            if (hasEvent) {
-                const dot = document.createElement('div');
-                dot.className = 'event-dot event-dot-org'; // Different color for org events
-                dateEl.appendChild(dot);
+            const hasMeeting = mockData.meetings.some(m => checkItemDate(m.date));
+            const hasEvent = mockData.events.some(e => checkItemDate(e.date));
+
+            if (hasMeeting || hasEvent) {
+                html += `<div class="dot-container">`;
+                if (hasMeeting) html += `<div class="event-dot meeting-dot"></div>`;
+                if (hasEvent) html += `<div class="event-dot event-dot-org"></div>`;
+                html += `</div>`;
             }
 
-            if (day === new Date().getDate()) {
+            dateEl.innerHTML = html;
+
+            const today = new Date();
+            if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
                 dateEl.classList.add('today');
             }
 
             calendarGrid.appendChild(dateEl);
         }
+    }
+
+    // --- Navigation ---
+    const prevBtn = document.querySelector('.calendar-nav .btn-icon:first-child');
+    const nextBtn = document.querySelector('.calendar-nav .btn-icon:last-child');
+
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            currentViewDate.setMonth(currentViewDate.getMonth() - 1);
+            renderCalendar();
+        };
+    }
+
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            currentViewDate.setMonth(currentViewDate.getMonth() + 1);
+            renderCalendar();
+        };
+    }
+
+    // ── Logout ──
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('tempus_token');
+            localStorage.removeItem('tempus_user');
+            localStorage.removeItem('selectedRole');
+            window.location.href = '/';
+        });
     }
 
     renderProfile();
@@ -252,6 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAutomation();
     renderReports();
 
-    // Fetch real data to populate the rest
+    // Fetch real data
     fetchDashboardData();
 });

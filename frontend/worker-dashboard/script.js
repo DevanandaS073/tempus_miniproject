@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Worker Dashboard Loaded');
+
 
     // ── Auth Check ──
     const token = localStorage.getItem('tempus_token');

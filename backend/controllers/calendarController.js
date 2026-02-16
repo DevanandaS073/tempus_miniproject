@@ -32,35 +32,52 @@ const createMeeting = async (req, res) => {
     try {
         const { title, start_time, end_time } = req.body;
         const userId = req.user.id; // From JWT
+        const startDt = new Date(start_time);
+        const endDt = new Date(end_time);
 
         // 1. Get User's Calendar
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
         if (!calendar) calendar = await prisma.calendars.create({ data: { user_id: userId } });
 
-        // 2. Conflict Check (Simple overlap)
-        const conflict = await prisma.meetings.findFirst({
+        // 2. Conflict Check — against other meetings in this calendar
+        const meetingConflict = await prisma.meetings.findFirst({
             where: {
                 calendar_id: calendar.calendar_id,
-                OR: [
-                    {
-                        start_time: { lte: new Date(end_time) },
-                        end_time: { gte: new Date(start_time) }
-                    }
-                ]
+                start_time: { lt: endDt },
+                end_time: { gt: startDt }
             }
         });
 
-        if (conflict) {
-            return res.status(409).json({ error: 'Meeting time conflicts with an existing event.' });
+        if (meetingConflict) {
+            return res.status(409).json({
+                error: `Time conflicts with existing meeting: "${meetingConflict.title}"`,
+                conflictWith: { type: 'meeting', title: meetingConflict.title, start: meetingConflict.start_time, end: meetingConflict.end_time }
+            });
         }
 
-        // 3. Create Meeting
+        // 3. Conflict Check — against events the user created
+        const eventConflict = await prisma.events.findFirst({
+            where: {
+                created_by: userId,
+                start_date: { lt: endDt },
+                end_date: { gt: startDt }
+            }
+        });
+
+        if (eventConflict) {
+            return res.status(409).json({
+                error: `Time conflicts with existing event: "${eventConflict.title}"`,
+                conflictWith: { type: 'event', title: eventConflict.title, start: eventConflict.start_date, end: eventConflict.end_date }
+            });
+        }
+
+        // 4. Create Meeting
         const meeting = await prisma.meetings.create({
             data: {
                 calendar_id: calendar.calendar_id,
                 title,
-                start_time: new Date(start_time),
-                end_time: new Date(end_time),
+                start_time: startDt,
+                end_time: endDt,
                 created_by: userId,
                 status: 'scheduled'
             }

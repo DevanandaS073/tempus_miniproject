@@ -506,6 +506,7 @@ body {
 .calendar-date {
     aspect-ratio: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     font-size: 0.9rem;
@@ -513,11 +514,23 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    gap: 4px;
+    /* Space between number and dots */
 }
 
 .calendar-date:hover {
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-main);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dot-container {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
 }
 
 .calendar-date.today {

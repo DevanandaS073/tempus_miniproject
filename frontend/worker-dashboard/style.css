@@ -478,22 +478,23 @@ body {
 }
 
 .calendar-grid.large .calendar-date {
-    min-height: 60px;
-    font-size: 1rem;
+    min-height: 40px;
+    font-size: 0.9rem;
 }
 
 .calendar-date {
-    aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     color: var(--text-muted);
     position: relative;
+    padding: 6px 4px;
+    min-height: 32px;
 }
 
 .calendar-date:hover {
