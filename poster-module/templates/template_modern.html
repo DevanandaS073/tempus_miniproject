@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Modern AI Poster Template</title>
+    <!-- Embedded font to ensure rendering -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Space+Grotesk:wght@300;500;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* 
+         * AI-GENERATED DESIGN SYSTEM
+         * A self-contained, high-impact visual system 
+         */
+        :root {
+            --poster-w: 800px;
+            --poster-h: 1200px;
+
+            /* Core Tokens */
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Space Grotesk', sans-serif;
+
+            /* Theme: DEFAULT (Cosmic Void) */
+            --bg-grad: radial-gradient(circle at 10% 20%, #2e1065 0%, #0f172a 90%);
+            --accent-1: #f472b6;
+            /* Pink */
+            --accent-2: #c084fc;
+            /* Purple */
+            --accent-3: #38bdf8;
+            /* Blue */
+            --text-main: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        /* RESET */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #000;
+        }
+
+        /* 
+         * MAIN POSTER CONTAINER 
+         * Fixed dimensions, overflow hidden 
+         */
+        .poster-container {
+            width: var(--poster-w);
+            height: var(--poster-h);
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-grad);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            padding: 60px;
+        }
+
+        /* ========================
+           THEME VARIANTS 
+           ======================== */
+
+        /* Theme: OCEAN (Deep Sea) */
+        .poster-container.theme-ocean {
+            --bg-grad: linear-gradient(180deg, #0f172a 0%, #0e7490 100%);
+            --accent-1: #22d3ee;
+            /* Cyan */
+            --accent-2: #818cf8;
+            /* Indigo */
+            --accent-3: #bef264;
+            /* Lime */
+        }
+
+        /* Theme: SUNSET (Solar Flare) */
+        .poster-container.theme-sunset {
+            --bg-grad: linear-gradient(135deg, #4c0519 0%, #be123c 50%, #ea580c 100%);
+            --accent-1: #fbbf24;
+            /* Amber */
+            --accent-2: #f43f5e;
+            /* Rose */
+            --accent-3: #fcd34d;
+            /* Yellow */
+        }
+
+        /* Theme: NEON (Cyberpunk) */
+        .poster-container.theme-neon {
+            --bg-grad: radial-gradient(circle at 50% 50%, #111827 0%, #000000 100%);
+            --accent-1: #00ff9d;
+            /* Neon Green */
+            --accent-2: #d946ef;
+            /* Magenta */
+            --accent-3: #00e1ff;
+            /* Cyan */
+        }
+
+        /* ========================
+           DECORATIVE ELEMENTS 
+           ======================== */
+
+        /* Ambient Glow Blobs */
+        .blob {
+            position: absolute;
+            background: var(--accent-1);
+            filter: blur(80px);
+            opacity: 0.4;
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 10s infinite ease-in-out;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            top: -100px;
+            left: -100px;
+            background: var(--accent-1);
+        }
+
+        .blob-2 {
+            width: 500px;
+            height: 500px;
+            bottom: -150px;
+            right: -150px;
+            background: var(--accent-2);
+            animation-delay: -5s;
+        }
+
+        .blob-3 {
+            width: 300px;
+            height: 300px;
+            top: 40%;
+            left: 60%;
+            background: var(--accent-3);
+            opacity: 0.2;
+        }
+
+        /* Noise Texture Overlay */
+        .texture-overlay {
+            position: absolute;
+            inset: 0;
+            opacity: 0.07;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            z-index: 1;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+        }
+
+        /* Abstract Grid Lines */
+        .grid-lines {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100px 100px;
+            z-index: 0;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(30px, -30px);
+            }
+        }
+
+        /* ========================
+           CONTENT LAYOUT 
+           ======================== */
+
+        .content-layer {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            /* Center vertically */
+            gap: 40px;
+        }
+
+        /* HERO SECTION */
+        .hero-section {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 24px;
+            margin: 0;
+        }
+
+        .pill-badge {
+            font-family: var(--font-body);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            padding: 8px 24px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: var(--accent-1);
+            font-weight: 700;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .main-title {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 82px;
+            line-height: 1.0;
+            /* Tigher line height */
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            margin: 0;
+            padding: 0 20px;
+            /* Prevent edge touching */
+
+            /* Gradient Text */
+            background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            /* Glow Shadow */
+            filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.3));
+        }
+
+        .subtitle {
+            font-family: var(--font-body);
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.05em;
+            font-weight: 300;
+            max-width: 80%;
+        }
+
+        /* INFO GRID */
+        .info-grid {
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin: 0;
+            /* Let parent gap handle spacing */
+            width: 100%;
+        }
+
+        .info-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            transition: transform 0.3s;
+        }
+
+        .info-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 10px var(--accent-1));
+        }
+
+        .info-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* BODY & CTA */
+        .bottom-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: none;
+        }
+
+        .description {
+            font-size: 20px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            text-align: center;
+            /* Center text */
+            margin: 0 auto;
+            padding: 0;
+            border: none;
+        }
+
+
+        .cta-button {
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+            color: #000;
+            padding: 18px 48px;
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 30px var(--accent-2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(255, 255, 255, 0.4), transparent);
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="poster-container" data-template="modern">
+        <!-- Texture & Background -->
+        <div class="texture-overlay"></div>
+        <div class="grid-lines"></div>
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+
+        <div class="content-layer">
+
+            <!-- Hero -->
+            <div class="hero-section" data-zone="hero">
+                <div class="pill-badge">Exclusive Event</div>
+                <h1 class="main-title" data-content="title" data-max-chars="60">
+                    <!-- Title injected here -->
+                </h1>
+                <div class="subtitle" data-zone="subtitle">
+                    <span data-content="subtitle" data-max-chars="100">
+                        <!-- Subtitle injected here -->
+                    </span>
+                </div>
+            </div>
+
+            <!-- Info Grid -->
+            <div class="info-grid" data-zone="meta">
+                <div class="info-card">
+                    <div class="info-icon">📅</div>
+                    <div class="info-label">Date</div>
+                    <div class="info-value" data-content="date"></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">📍</div>
+                    <div class="info-label">Location</div>
+                    <div class="info-value" data-content="location"></div>
+                </div>
+                <!-- Time merged into date or separate if needed -->
+            </div>
+
+            <!-- Bottom Content -->
+            <div class="bottom-section">
+                <div class="description" data-zone="body">
+                    <p data-content="description" data-max-chars="300"></p>
+                </div>
+
+                <div class="cta-wrapper" data-zone="cta">
+                    <button class="cta-button" data-content="cta">
+                        Register Now
+                        <span>→</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poster Generator - AI Design Preview</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #8b5cf6;
+            --border: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .layout {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Controls */
+        .controls {
+            width: 320px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input,
+        textarea,
+        select {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .theme-btn {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .theme-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .theme-btn.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s;
+            margin-top: auto;
+        }
+
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Preview Area */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                linear-gradient(rgba(15, 23, 42, 0.8) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 23, 42, 0.8) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            background-position: center center;
+            overflow: auto;
+            padding: 40px;
+        }
+
+        #poster-preview {
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Controls Sidebar -->
+        <div class="controls">
+            <div class="control-group">
+                <h2>Theme Selection</h2>
+                <div class="theme-grid">
+                    <button class="theme-btn active" onclick="setTheme('default')">Default</button>
+                    <button class="theme-btn" onclick="setTheme('ocean')">Ocean</button>
+                    <button class="theme-btn" onclick="setTheme('sunset')">Sunset</button>
+                    <button class="theme-btn" onclick="setTheme('neon')">Neon</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h2>Content Editor</h2>
+
+                <label>Event Title</label>
+                <input type="text" id="input-title" value="Future of AI Design 2026">
+
+                <label>Subtitle</label>
+                <input type="text" id="input-subtitle" value="Generative Art & Typography">
+
+                <label>Date & Time</label>
+                <input type="text" id="input-date" value="October 15, 2026 • 9:00 AM">
+
+                <label>Location</label>
+                <input type="text" id="input-location" value="Grand Convention Hall, NY">
+
+                <label>Description</label>
+                <textarea
+                    id="input-desc">Join visual designers and AI engineers for a deep dive into the next generation of generative interfaces. Experience the future of automated design systems.</textarea>
+            </div>
+
+            <button class="action-btn" onclick="updatePoster()">Update Poster ⚡️</button>
+            <button class="action-btn download-btn" onclick="downloadPoster()"
+                style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 12px;">Download Image
+                📥</button>
+        </div>
+
+        <!-- Poster Preview -->
+        <div class="preview-area">
+            <div id="poster-preview"></div>
+        </div>
+    </div>
+
+    <!-- Core Modules -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="poster-module/validator.js"></script>
+    <script src="poster-module/content_mapper.js"></script>
+    <script src="poster-module/poster_renderer.js"></script>
+    <script src="poster-module/js/core/template_engine.js"></script>
+    <script>
+        // Ensure template assets (fonts + styles) are injected once
+        const engine = new TemplateEngine();
+        engine.setBasePath('schemas', './poster-module/templates/');
+        engine.setBasePath('html', './poster-module/templates/');
+    </script>
+
+    <script>
+        let currentTheme = 'default';
+        let renderer = null;
+
+        function setTheme(theme) {
+            currentTheme = theme;
+
+            // Update UI
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase() === theme) btn.classList.add('active');
+            });
+
+            updatePoster();
+        }
+
+        async function updatePoster() {
+            const eventData = {
+                title: document.getElementById('input-title').value,
+                subtitle: document.getElementById('input-subtitle').value,
+                description: document.getElementById('input-desc').value,
+                date: document.getElementById('input-date').value,
+                time: "", // Merged into date for cleaner input
+                location: document.getElementById('input-location').value,
+                theme: currentTheme
+            };
+
+            // 1. Map content
+            const mapper = new ContentMapper();
+            const content = mapper.mapContent(eventData);
+
+            // 2. Load engine
+            try {
+                const template = await engine.loadTemplate('modern');
+
+                // 3. Render
+                const container = document.querySelector('#poster-preview');
+                container.innerHTML = template.html;
+                engine.render(container, content, template.schema);
+
+                // Initialize renderer
+                renderer = new PosterRenderer();
+
+            } catch (err) {
+                console.error("Rendering failed:", err);
+            }
+        }
+
+        async function downloadPoster() {
+            if (!renderer) {
+                console.error('Renderer not initialized');
+                alert('Poster renderer not ready. Please try again in a moment.');
+                return;
+            }
+
+            const posterElement = document.querySelector('.poster-container');
+            const btn = document.querySelector('.download-btn');
+            const originalText = btn.innerHTML;
+
+            try {
+                btn.innerHTML = 'Generating... ⏳';
+                btn.disabled = true;
+
+                // Get filename from input or default
+                const titleInput = document.getElementById('input-title').value;
+                const safeFilename = titleInput.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'poster';
+
+                console.log('Starting export for:', safeFilename);
+
+                await renderer.renderAndExport(posterElement, {
+                    filename: safeFilename,
+                    scale: 2, // Retina quality
+                    quality: 1.0
+                });
+
+                console.log('Export process completed successfully');
+
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Failed to download poster. \n\nError: ' + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', updatePoster);
+    </script>
+</body>
+
+</html>
