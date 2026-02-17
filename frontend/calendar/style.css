@@ -132,7 +132,7 @@
 }
 
 .close-modal:hover {
-    color: #ef4444;
+    color: #f4f4f5;
 }
 
 .form-group {
@@ -165,7 +165,7 @@
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-    border-color: var(--primary-color, #3b82f6);
+    border-color: var(--primary-color, #71717a);
 }
 
 .form-group textarea {
@@ -188,7 +188,7 @@
     width: 100%;
     padding: 0.8rem;
     border: none;
-    background: var(--primary-color, #3b82f6);
+    background: var(--primary-color, #71717a);
     color: white;
     font-size: 0.95rem;
     font-weight: 600;
@@ -199,9 +199,9 @@
 }
 
 .btn-primary:hover {
-    background: var(--primary-hover, #2563eb);
+    background: var(--primary-hover, #a1a1aa);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(113, 113, 122, 0.3);
 }
 
 .btn-secondary {
@@ -220,7 +220,7 @@
 }
 
 .btn-secondary:hover {
-    border-color: var(--primary-color, #3b82f6);
+    border-color: var(--primary-color, #71717a);
     color: var(--text-main, #f8fafc);
 }
 
@@ -236,7 +236,7 @@
 
 .success-icon {
     font-size: 3rem;
-    color: #10b981;
+    color: #d4d4d8;
     margin-bottom: 1rem;
 }
 

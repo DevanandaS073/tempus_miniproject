@@ -13,59 +13,63 @@
    ============================================ */
 
 :root {
-    /* Primary Colors */
-    --color-primary-50: #EEF2FF;
-    --color-primary-100: #E0E7FF;
-    --color-primary-200: #C7D2FE;
-    --color-primary-300: #A5B4FC;
-    --color-primary-400: #818CF8;
-    --color-primary-500: #6366F1;
-    --color-primary-600: #4F46E5;
-    --color-primary-700: #4338CA;
-    --color-primary-800: #3730A3;
-    --color-primary-900: #312E81;
+    /* Primary Colors (Mapped to Neutral) */
+    --color-primary-50: #FAFAFA;
+    --color-primary-100: #F4F4F5;
+    --color-primary-200: #E4E4E7;
+    --color-primary-300: #D4D4D8;
+    --color-primary-400: #A1A1AA;
+    --color-primary-500: #71717A;
+    --color-primary-600: #52525B;
+    --color-primary-700: #3F3F46;
+    --color-primary-800: #27272A;
+    --color-primary-900: #18181B;
 
-    /* Secondary Colors */
-    --color-secondary-50: #F0FDF4;
-    --color-secondary-100: #DCFCE7;
-    --color-secondary-200: #BBF7D0;
-    --color-secondary-300: #86EFAC;
-    --color-secondary-400: #4ADE80;
-    --color-secondary-500: #22C55E;
-    --color-secondary-600: #16A34A;
-    --color-secondary-700: #15803D;
-    --color-secondary-800: #166534;
-    --color-secondary-900: #14532D;
+    /* Secondary Colors (Mapped to Neutral) */
+    --color-secondary-50: #FAFAFA;
+    --color-secondary-100: #F4F4F5;
+    --color-secondary-200: #E4E4E7;
+    --color-secondary-300: #D4D4D8;
+    --color-secondary-400: #A1A1AA;
+    --color-secondary-500: #71717A;
+    --color-secondary-600: #52525B;
+    --color-secondary-700: #3F3F46;
+    --color-secondary-800: #27272A;
+    --color-secondary-900: #18181B;
 
     /* Neutral Colors */
-    --color-neutral-50: #F9FAFB;
-    --color-neutral-100: #F3F4F6;
-    --color-neutral-200: #E5E7EB;
-    --color-neutral-300: #D1D5DB;
-    --color-neutral-400: #9CA3AF;
-    --color-neutral-500: #6B7280;
-    --color-neutral-600: #4B5563;
-    --color-neutral-700: #374151;
-    --color-neutral-800: #1F2937;
-    --color-neutral-900: #111827;
+    --color-neutral-50: #FAFAFA;
+    --color-neutral-100: #F4F4F5;
+    --color-neutral-200: #E4E4E7;
+    --color-neutral-300: #D4D4D8;
+    --color-neutral-400: #A1A1AA;
+    --color-neutral-500: #71717A;
+    --color-neutral-600: #52525B;
+    --color-neutral-700: #3F3F46;
+    --color-neutral-800: #27272A;
+    --color-neutral-900: #18181B;
 
-    /* Accent Colors */
-    --color-accent-50: #FEF3C7;
-    --color-accent-100: #FDE68A;
-    --color-accent-200: #FCD34D;
-    --color-accent-300: #FBBF24;
-    --color-accent-400: #F59E0B;
-    --color-accent-500: #D97706;
-    --color-accent-600: #B45309;
-    --color-accent-700: #92400E;
-    --color-accent-800: #78350F;
-    --color-accent-900: #451A03;
+    /* Accent Colors (Mapped to Neutral) */
+    --color-accent-50: #FAFAFA;
+    --color-accent-100: #F4F4F5;
+    --color-accent-200: #E4E4E7;
+    --color-accent-300: #D4D4D8;
+    --color-accent-400: #A1A1AA;
+    --color-accent-500: #71717A;
+    --color-accent-600: #52525B;
+    --color-accent-700: #3F3F46;
+    --color-accent-800: #27272A;
+    --color-accent-900: #18181B;
 
-    /* Semantic Colors */
-    --color-success: #22C55E;
-    --color-warning: #F59E0B;
-    --color-error: #EF4444;
-    --color-info: #3B82F6;
+    /* Semantic Colors (Monochrome) */
+    --color-success: #52525B;
+    /* Dark Gray */
+    --color-warning: #71717A;
+    /* Medium Gray */
+    --color-error: #3F3F46;
+    /* Darker Gray */
+    --color-info: #A1A1AA;
+    /* Light Gray */
 
     /* Background Colors */
     --color-bg-primary: #FFFFFF;
