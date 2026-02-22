@@ -10,6 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // ── RBAC: Admins should use admin dashboard ──
+    if (storedUser.role && storedUser.role === 'admin') {
+        window.location.href = '/dashboard';
+        return;
+    }
+
     // ── Blob Animation ──
     function randomizeBlobs() {
         const blobs = document.querySelectorAll('.blob');
@@ -32,25 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         meetings: [],
         events: [],
-        collisions: [
-            { id: 1, meeting1: 'Team Standup', meeting2: 'Design Review', time: 'Feb 16, 10:00 AM – 11:00 AM', severity: 'high' },
-            { id: 2, meeting1: 'Sprint Planning', meeting2: 'Client Call', time: 'Feb 18, 2:00 PM – 3:00 PM', severity: 'medium' }
-        ],
-        certificates: [
-            { id: 1, name: 'Web Dev Workshop 2025', event: 'Workshop', date: 'Jan 15, 2026', status: 'generated' },
-            { id: 2, name: 'AI Summit Attendance', event: 'Conference', date: 'Feb 01, 2026', status: 'generated' },
-            { id: 3, name: 'Leadership Training', event: 'Training', date: 'Feb 10, 2026', status: 'pending' }
-        ],
-        posters: [
-            { id: 1, name: 'Tech Talk 2026', event: 'Company Event', date: 'Feb 20, 2026' },
-            { id: 2, name: 'Annual Team Outing', event: 'Social Event', date: 'Mar 05, 2026' },
-            { id: 3, name: 'Hackathon 2026', event: 'Competition', date: 'Mar 15, 2026' }
-        ],
-        reports: [
-            { id: 1, name: 'Weekly_Meeting_Summary.pdf', size: '1.2 MB', date: 'Feb 10, 2026' },
-            { id: 2, name: 'Event_Attendance_Report.pdf', size: '850 KB', date: 'Feb 05, 2026' },
-            { id: 3, name: 'Q4_Project_Review.pdf', size: '2.1 MB', date: 'Jan 28, 2026' }
-        ]
+        collisions: [],
+        certificates: [],
+        posters: [],
+        reports: []
     };
 
     // ── Section Navigation ──
@@ -150,24 +141,78 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let day = 1; day <= daysInMonth; day++) {
             const dateEl = document.createElement('div');
             dateEl.classList.add('calendar-date');
-            dateEl.textContent = day;
 
-            const hasMeeting = data.meetings.some(m => {
-                const d = new Date(m.date);
-                return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year;
-            });
-            if (hasMeeting) {
-                const dot = document.createElement('div');
-                dot.className = 'event-dot meeting-dot';
-                dateEl.appendChild(dot);
+            const checkItemDate = (dateObj) => {
+                return dateObj && dateObj.getDate() === day && dateObj.getMonth() === month && dateObj.getFullYear() === year;
+            };
+
+            const hasMeeting = data.meetings.some(m => checkItemDate(m.date));
+            const hasEvent = data.events.some(e => checkItemDate(e.date));
+
+            let html = `<span class="date-num">${day}</span>`;
+            if (hasMeeting || hasEvent) {
+                html += `<div class="dot-container">`;
+                if (hasMeeting) html += `<div class="event-dot meeting-dot"></div>`;
+                if (hasEvent) html += `<div class="event-dot event-dot-org"></div>`;
+                html += `</div>`;
             }
+            dateEl.innerHTML = html;
 
             if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
                 dateEl.classList.add('today');
             }
 
+            // Click to show day's events/meetings
+            dateEl.addEventListener('click', () => {
+                showDayDetail(year, month, day);
+            });
+
             targetGrid.appendChild(dateEl);
         }
+    }
+
+    // ── Day Detail Popup ──
+    function showDayDetail(year, month, day) {
+        const panel = document.getElementById('day-detail');
+        if (!panel) return;
+
+        const clickedDate = new Date(year, month, day);
+        const dateStr = clickedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+        const dayEvents = data.events.filter(e => e.date.getDate() === day && e.date.getMonth() === month && e.date.getFullYear() === year);
+        const dayMeetings = data.meetings.filter(m => m.date.getDate() === day && m.date.getMonth() === month && m.date.getFullYear() === year);
+
+        let html = `<div class="day-detail-header">
+            <h4>${dateStr}</h4>
+            <button class="btn-icon mini day-detail-close" onclick="this.closest('.day-detail-panel').innerHTML='<h4>Select a date to view details</h4>'"><i class="fa-solid fa-xmark"></i></button>
+        </div>`;
+
+        if (dayEvents.length === 0 && dayMeetings.length === 0) {
+            html += `<div class="empty-state"><i class="fa-regular fa-calendar"></i><p>No events or meetings on this day</p></div>`;
+        } else {
+            dayEvents.forEach(e => {
+                html += `<div class="day-detail-item event-item">
+                    <div class="event-dot event-dot-org" style="display:inline-block;margin-right:8px;"></div>
+                    <div>
+                        <strong>${e.title}</strong>
+                        <p style="color:var(--text-muted);font-size:0.85rem;margin:2px 0;">${e.type || 'Event'}${e.location ? ' · ' + e.location : ''}</p>
+                        ${e.description ? '<p style="color:var(--text-muted);font-size:0.8rem;margin:2px 0;">' + e.description + '</p>' : ''}
+                        <p style="color:var(--text-muted);font-size:0.8rem;">${e.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${e.endDate ? ' – ' + e.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                    </div>
+                </div>`;
+            });
+            dayMeetings.forEach(m => {
+                html += `<div class="day-detail-item meeting-item-detail">
+                    <div class="event-dot meeting-dot" style="display:inline-block;margin-right:8px;"></div>
+                    <div>
+                        <strong>${m.title}</strong>
+                        <p style="color:var(--text-muted);font-size:0.85rem;margin:2px 0;">${m.time} · ${m.participants}</p>
+                    </div>
+                </div>`;
+            });
+        }
+
+        panel.innerHTML = html;
     }
 
     // ── Calendar Navigation ──
@@ -413,7 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: e.event_id,
                     title: e.title,
                     type: e.event_type,
+                    description: e.description || '',
+                    location: e.location || '',
                     date: new Date(e.start_date),
+                    endDate: new Date(e.end_date),
                     status: 'upcoming'
                 }));
             }

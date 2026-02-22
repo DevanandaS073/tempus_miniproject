@@ -309,8 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 location: document.getElementById('e-location').value
             };
 
-            try {
-                const res = await fetch('/api/events', {
+            async function submitEvent(force = false) {
+                const url = force ? '/api/events?force=true' : '/api/events';
+                return await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -318,6 +319,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(eventData)
                 });
+            }
+
+            try {
+                let res = await submitEvent(false);
+
+                if (res.status === 409) {
+                    const conflict = await res.json();
+                    const proceed = confirm(`⚠️ ${conflict.error}\n\nDo you want to create this event anyway?`);
+                    if (proceed) {
+                        res = await submitEvent(true);
+                    } else {
+                        return;
+                    }
+                }
 
                 if (res.ok) {
                     lastCreatedEvent = { ...eventData };

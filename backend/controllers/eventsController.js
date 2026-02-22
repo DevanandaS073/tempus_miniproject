@@ -28,39 +28,41 @@ const createEvent = async (req, res) => {
         const userId = req.user.id;
         const startDt = new Date(start_date);
         const endDt = new Date(end_date);
+        const force = req.query.force === 'true';
 
-        // 1. Conflict Check — against events the user already created
-        const eventConflict = await prisma.events.findFirst({
-            where: {
-                created_by: userId,
-                start_date: { lt: endDt },
-                end_date: { gt: startDt }
-            }
-        });
-
-        if (eventConflict) {
-            return res.status(409).json({
-                error: `Time conflicts with existing event: "${eventConflict.title}"`,
-                conflictWith: { type: 'event', title: eventConflict.title, start: eventConflict.start_date, end: eventConflict.end_date }
-            });
-        }
-
-        // 2. Conflict Check — against meetings in the user's calendar
-        const calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
-        if (calendar) {
-            const meetingConflict = await prisma.meetings.findFirst({
+        if (!force) {
+            const eventConflict = await prisma.events.findFirst({
                 where: {
-                    calendar_id: calendar.calendar_id,
-                    start_time: { lt: endDt },
-                    end_time: { gt: startDt }
+                    created_by: userId,
+                    start_date: { lt: endDt },
+                    end_date: { gt: startDt }
                 }
             });
 
-            if (meetingConflict) {
+            if (eventConflict) {
                 return res.status(409).json({
-                    error: `Time conflicts with existing meeting: "${meetingConflict.title}"`,
-                    conflictWith: { type: 'meeting', title: meetingConflict.title, start: meetingConflict.start_time, end: meetingConflict.end_time }
+                    error: `Time conflicts with existing event: "${eventConflict.title}"`,
+                    conflictWith: { type: 'event', title: eventConflict.title, start: eventConflict.start_date, end: eventConflict.end_date }
                 });
+            }
+
+            // 2. Conflict Check — against meetings in the user's calendar
+            const calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
+            if (calendar) {
+                const meetingConflict = await prisma.meetings.findFirst({
+                    where: {
+                        calendar_id: calendar.calendar_id,
+                        start_time: { lt: endDt },
+                        end_time: { gt: startDt }
+                    }
+                });
+
+                if (meetingConflict) {
+                    return res.status(409).json({
+                        error: `Time conflicts with existing meeting: "${meetingConflict.title}"`,
+                        conflictWith: { type: 'meeting', title: meetingConflict.title, start: meetingConflict.start_time, end: meetingConflict.end_time }
+                    });
+                }
             }
         }
 

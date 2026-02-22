@@ -1082,3 +1082,82 @@ body {
         align-items: center;
     }
 }
+
+/* ── Calendar Day Dots ── */
+.dot-container {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.event-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.meeting-dot {
+    background: #71717a;
+}
+
+.event-dot-org {
+    background: #a1a1aa;
+}
+
+/* ── Day Detail Popup ── */
+.day-detail-panel {
+    padding: 16px;
+    min-height: 100px;
+}
+
+.day-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.day-detail-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.day-detail-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.day-detail-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.day-detail-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.day-detail-item strong {
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.calendar-date {
+    cursor: pointer;
+}
+
+.calendar-date:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}

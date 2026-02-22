@@ -89,13 +89,16 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/signup', async (req, res) => {
-    const { email, password, name } = req.body;
+    const { email, password, name, role } = req.body;
+    // Map frontend role selection to Prisma enum
+    const dbRole = (role && role.toUpperCase() === 'ADMIN') ? 'admin' : 'user';
     try {
         const user = await prisma.users.create({
             data: {
                 email,
                 name,
-                password_hash: password
+                password_hash: password,
+                role: dbRole
             }
         });
         res.json({ message: 'User created', user });
