@@ -32,25 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         meetings: [],
         events: [],
-        collisions: [
-            { id: 1, meeting1: 'Team Standup', meeting2: 'Design Review', time: 'Feb 16, 10:00 AM – 11:00 AM', severity: 'high' },
-            { id: 2, meeting1: 'Sprint Planning', meeting2: 'Client Call', time: 'Feb 18, 2:00 PM – 3:00 PM', severity: 'medium' }
-        ],
-        certificates: [
-            { id: 1, name: 'Web Dev Workshop 2025', event: 'Workshop', date: 'Jan 15, 2026', status: 'generated' },
-            { id: 2, name: 'AI Summit Attendance', event: 'Conference', date: 'Feb 01, 2026', status: 'generated' },
-            { id: 3, name: 'Leadership Training', event: 'Training', date: 'Feb 10, 2026', status: 'pending' }
-        ],
-        posters: [
-            { id: 1, name: 'Tech Talk 2026', event: 'Company Event', date: 'Feb 20, 2026' },
-            { id: 2, name: 'Annual Team Outing', event: 'Social Event', date: 'Mar 05, 2026' },
-            { id: 3, name: 'Hackathon 2026', event: 'Competition', date: 'Mar 15, 2026' }
-        ],
-        reports: [
-            { id: 1, name: 'Weekly_Meeting_Summary.pdf', size: '1.2 MB', date: 'Feb 10, 2026' },
-            { id: 2, name: 'Event_Attendance_Report.pdf', size: '850 KB', date: 'Feb 05, 2026' },
-            { id: 3, name: 'Q4_Project_Review.pdf', size: '2.1 MB', date: 'Jan 28, 2026' }
-        ]
+        collisions: [],
+        certificates: [],
+        posters: [],
+        reports: []
     };
 
     // ── Section Navigation ──
@@ -69,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update header title
         const titles = {
             overview: 'Dashboard', calendar: 'My Calendar', meetings: 'My Meetings',
-            collisions: 'Collision Alerts', certificates: 'My Certificates',
+            events: 'Upcoming Events', collisions: 'Collision Alerts', certificates: 'My Certificates',
             posters: 'Event Posters', reports: 'My Reports', settings: 'Profile & Settings'
         };
         const h1 = document.querySelector('.welcome-text h1');
@@ -200,7 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!list) return;
         list.innerHTML = '';
 
-        const upcoming = data.meetings.filter(m => new Date(m.date) >= new Date()).slice(0, 5);
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const upcoming = data.meetings.filter(m => new Date(m.date) >= todayStart).slice(0, 5);
 
         if (upcoming.length === 0) {
             list.innerHTML = '<div class="empty-state"><i class="fa-regular fa-calendar"></i><p>No upcoming meetings</p></div>';
@@ -234,9 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
         list.innerHTML = '';
 
         const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const filtered = currentTab === 'upcoming'
-            ? data.meetings.filter(m => new Date(m.date) >= now)
-            : data.meetings.filter(m => new Date(m.date) < now);
+            ? data.meetings.filter(m => new Date(m.date) >= todayStart)
+            : data.meetings.filter(m => new Date(m.date) < todayStart);
 
         if (filtered.length === 0) {
             list.innerHTML = `<div class="empty-state"><i class="fa-regular fa-calendar-xmark"></i><p>No ${currentTab} meetings</p></div>`;
@@ -400,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: m.title,
                     time: new Date(m.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     participants: m.participants.length > 0 ? `${m.participants.length} Participants` : 'No Participants',
-                    organizer: `Organized by ${m.organizer || 'Admin'}`,
+                    organizer: `Organized by ${m.creator ? m.creator.name : 'Admin'}`,
                     status: m.status,
                     date: new Date(m.start_time)
                 }));
@@ -412,8 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.events = events.map(e => ({
                     id: e.event_id,
                     title: e.title,
+                    description: e.description || '',
                     type: e.event_type,
-                    date: new Date(e.start_date),
+                    location: e.location || '',
+                    start_date: new Date(e.start_date),
+                    end_date: new Date(e.end_date),
+                    creator: e.creator ? e.creator.name : 'Admin',
                     status: 'upcoming'
                 }));
             }
@@ -439,6 +430,117 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCertPreviews();
         renderPosters();
         renderReports();
+        renderEvents();
+    }
+
+    // ── Render Events ──
+    const joinedEvents = new Set(JSON.parse(localStorage.getItem('tempus_joined_events') || '[]'));
+
+    function renderEvents() {
+        const list = document.getElementById('events-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (data.events.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fa-regular fa-calendar"></i><p>No events available yet</p></div>';
+            return;
+        }
+
+        data.events.forEach(ev => {
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            const isJoined = joinedEvents.has(ev.id);
+            const dateStr = ev.start_date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = ev.start_date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            card.innerHTML = `
+                <div class="event-card-top">
+                    <h4>${ev.title}</h4>
+                    <span class="event-type-badge">${ev.type}</span>
+                </div>
+                ${ev.description ? `<p class="event-card-desc">${ev.description}</p>` : ''}
+                <div class="event-card-meta">
+                    <div class="event-meta-item"><i class="fa-regular fa-calendar"></i> ${dateStr}</div>
+                    <div class="event-meta-item"><i class="fa-regular fa-clock"></i> ${timeStr}</div>
+                    ${ev.location ? `<div class="event-meta-item"><i class="fa-solid fa-location-dot"></i> ${ev.location}</div>` : ''}
+                    <div class="event-meta-item"><i class="fa-solid fa-user"></i> Organized by ${ev.creator}</div>
+                </div>
+                <button class="btn-join ${isJoined ? 'registered' : ''}" data-id="${ev.id}">
+                    ${isJoined
+                    ? '<i class="fa-solid fa-circle-check"></i> Registered'
+                    : '<i class="fa-solid fa-calendar-plus"></i> Join Event'
+                }
+                </button>
+            `;
+            if (!isJoined) {
+                card.querySelector('.btn-join').addEventListener('click', () => openRegModal(ev));
+            }
+            list.appendChild(card);
+        });
+    }
+
+    // ── Registration Modal ──
+    const regModal = document.getElementById('reg-modal');
+    const regForm = document.getElementById('reg-form');
+    const modalClose = document.getElementById('reg-modal-close');
+
+    function openRegModal(ev) {
+        document.getElementById('reg-event-id').value = ev.id;
+        document.getElementById('reg-name').value = storedUser.name || '';
+        document.getElementById('reg-email').value = storedUser.email || '';
+        document.getElementById('reg-note').value = '';
+
+        const dateStr = ev.start_date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        document.getElementById('modal-event-info').innerHTML = `
+            <h4>${ev.title}</h4>
+            <p><i class="fa-regular fa-calendar"></i> ${dateStr}</p>
+            ${ev.location ? `<p><i class="fa-solid fa-location-dot"></i> ${ev.location}</p>` : ''}
+        `;
+        regModal.classList.remove('hidden');
+    }
+
+    function closeRegModal() {
+        regModal.classList.add('hidden');
+    }
+
+    if (modalClose) modalClose.addEventListener('click', closeRegModal);
+    regModal?.addEventListener('click', (e) => { if (e.target === regModal) closeRegModal(); });
+
+    if (regForm) {
+        regForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const eventId = document.getElementById('reg-event-id').value;
+            const submitBtn = document.getElementById('reg-submit-btn');
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
+
+            try {
+                const res = await fetch('/api/events/join', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ event_id: eventId })
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    joinedEvents.add(parseInt(eventId));
+                    localStorage.setItem('tempus_joined_events', JSON.stringify([...joinedEvents]));
+                    closeRegModal();
+                    renderEvents();
+                } else {
+                    alert(result.error || 'Registration failed');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Confirm Registration';
+            }
+        });
     }
 
     // ── Settings Handlers ──
@@ -459,3 +561,144 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAll();
     fetchData();
 });
+
+// ═══════════════════════════════════════════════════════
+// NOTIFICATION SYSTEM
+// ═══════════════════════════════════════════════════════
+function initNotifications() {
+    const token = localStorage.getItem('tempus_token');
+    if (!token) return;
+
+    const bellBtn = document.getElementById('notif-bell-btn');
+    const dropdown = document.getElementById('notif-dropdown');
+    const badge = document.getElementById('notif-badge');
+    const list = document.getElementById('notif-list');
+    const markAllBtn = document.getElementById('notif-mark-all-btn');
+    const clearBtn = document.getElementById('notif-clear-btn');
+
+    if (!bellBtn) return;
+
+    const TYPE_ICONS = {
+        event_created: { icon: 'fa-calendar-plus', cls: 'event_created' },
+        event_joined: { icon: 'fa-user-check', cls: 'event_joined' },
+        meeting_invite: { icon: 'fa-handshake', cls: 'meeting_invite' },
+        system: { icon: 'fa-info-circle', cls: 'system' }
+    };
+
+    function relativeTime(dateStr) {
+        const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        return Math.floor(diff / 86400) + 'd ago';
+    }
+
+    function renderNotifications(notifications) {
+        list.innerHTML = '';
+        if (!notifications.length) {
+            list.innerHTML = '<li class="notif-empty">You\'re all caught up! &#127881;</li>';
+            return;
+        }
+        notifications.forEach(function (n) {
+            var ti = TYPE_ICONS[n.type] || TYPE_ICONS.system;
+            var li = document.createElement('li');
+            li.className = 'notif-item' + (n.is_read ? '' : ' unread');
+            li.dataset.id = n.id;
+            li.innerHTML =
+                '<div class="notif-icon ' + ti.cls + '"><i class="fa-solid ' + ti.icon + '"></i></div>' +
+                '<div class="notif-body">' +
+                '<div class="notif-title">' + n.title + '</div>' +
+                '<div class="notif-msg">' + n.message + '</div>' +
+                '<div class="notif-time">' + relativeTime(n.created_at) + '</div>' +
+                '</div>' +
+                '<button class="notif-dismiss" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>';
+
+            li.addEventListener('click', function (e) {
+                if (e.target.closest('.notif-dismiss')) return;
+                if (!n.is_read) doMarkRead(n.id, li);
+                if (n.link) window.location.href = n.link;
+            });
+
+            li.querySelector('.notif-dismiss').addEventListener('click', function (e) {
+                e.stopPropagation();
+                doMarkRead(n.id, li);
+                li.remove();
+                if (!list.children.length) list.innerHTML = '<li class="notif-empty">You\'re all caught up! &#127881;</li>';
+            });
+
+            list.appendChild(li);
+        });
+    }
+
+    function doMarkRead(id, li) {
+        fetch('/api/notifications/' + id + '/read', {
+            method: 'PATCH',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tempus_token') }
+        }).catch(function () { });
+        if (li) li.classList.remove('unread');
+    }
+
+    function fetchNotifications() {
+        fetch('/api/notifications', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tempus_token') }
+        }).then(function (res) {
+            if (!res.ok) return;
+            return res.json();
+        }).then(function (data) {
+            if (!data) return;
+            renderNotifications(data.notifications);
+            var prev = parseInt(badge.textContent) || 0;
+            if (data.unreadCount > 0) {
+                badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+                badge.classList.remove('hidden');
+                if (data.unreadCount > prev) {
+                    bellBtn.classList.add('ringing');
+                    setTimeout(function () { bellBtn.classList.remove('ringing'); }, 700);
+                }
+            } else {
+                badge.classList.add('hidden');
+            }
+        }).catch(function () { });
+    }
+
+    bellBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = !dropdown.classList.contains('hidden');
+        dropdown.classList.toggle('hidden', open);
+        bellBtn.classList.toggle('active', !open);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#notif-wrapper')) {
+            dropdown.classList.add('hidden');
+            bellBtn.classList.remove('active');
+        }
+    });
+
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function () {
+            fetch('/api/notifications/read-all', {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tempus_token') }
+            }).then(function () {
+                document.querySelectorAll('.notif-item.unread').forEach(function (el) { el.classList.remove('unread'); });
+                badge.classList.add('hidden');
+            }).catch(function () { });
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            fetch('/api/notifications', {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tempus_token') }
+            }).then(function () { fetchNotifications(); }).catch(function () { });
+        });
+    }
+
+    fetchNotifications();
+    setInterval(fetchNotifications, 30000);
+}
+
+// Auto-init notifications when DOM is ready
+document.addEventListener('DOMContentLoaded', function () { initNotifications(); });

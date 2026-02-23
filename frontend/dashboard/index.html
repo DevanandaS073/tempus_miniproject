@@ -56,9 +56,24 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" placeholder="Search...">
                     </div>
-                    <div class="notification-bell">
-                        <i class="fa-regular fa-bell"></i>
-                        <span class="badge">0</span>
+                    <!-- Notification Bell -->
+                    <div class="notif-wrapper" id="notif-wrapper">
+                        <button class="notif-bell-btn" id="notif-bell-btn" aria-label="Notifications">
+                            <i class="fa-regular fa-bell"></i>
+                            <span class="notif-badge hidden" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-dropdown hidden" id="notif-dropdown">
+                            <div class="notif-dropdown-header">
+                                <span class="notif-dropdown-title">Notifications</span>
+                                <div class="notif-header-actions">
+                                    <button class="notif-top-btn" id="notif-mark-all-btn">Mark all read</button>
+                                    <button class="notif-top-btn danger" id="notif-clear-btn">Clear read</button>
+                                </div>
+                            </div>
+                            <ul class="notif-list" id="notif-list">
+                                <li class="notif-empty">No notifications yet</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -138,6 +153,67 @@
                             </div>
                         </div>
 
+                        <div class="card poster-gen-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-image" style="color:#a855f7;margin-right:8px"></i>Poster
+                                    Generation</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="gen-form">
+                                    <select id="poster-event-select" class="gen-select">
+                                        <option value="">-- Select Event --</option>
+                                    </select>
+                                    <select id="poster-template-select" class="gen-select">
+                                        <option value="modern">Modern Template</option>
+                                        <option value="classic">Classic Template</option>
+                                        <option value="minimal">Minimal Template</option>
+                                    </select>
+                                    <button class="btn-generate" id="generate-poster-btn">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Poster
+                                    </button>
+                                </div>
+                                <div class="gen-results" id="poster-results"></div>
+                            </div>
+                        </div>
+
+                        <div class="card cert-gen-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-certificate"
+                                        style="color:#22c55e;margin-right:8px"></i>Certificate Generation</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="gen-form">
+                                    <select id="cert-event-select" class="gen-select">
+                                        <option value="">-- Select Event --</option>
+                                    </select>
+                                    <select id="cert-type-select" class="gen-select">
+                                        <option value="attendance">Attendance Certificate</option>
+                                        <option value="participation">Participation Certificate</option>
+                                        <option value="completion">Completion Certificate</option>
+                                    </select>
+                                    <button class="btn-generate green" id="generate-cert-btn">
+                                        <i class="fa-solid fa-file-circle-check"></i> Generate Certificates
+                                    </button>
+                                </div>
+                                <div class="gen-results" id="cert-results"></div>
+                            </div>
+                        </div>
+
+                        <div class="card my-events-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-calendar-star" style="color:#f59e0b;margin-right:8px"></i>My
+                                    Events</h3>
+                                <span class="event-count-badge" id="admin-event-count">0 events</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="admin-events-list" id="admin-events-list">
+                                    <div class="empty-state">
+                                        <p>No events created yet</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card reports-card">
                             <div class="card-header">
                                 <h3>Recent Reports</h3>
@@ -149,12 +225,48 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </main>
     </div>
 
     <script src="script.js"></script>
+
+    <!-- Poster Preview Modal -->
+    <div class="modal-overlay hidden" id="poster-preview-modal">
+        <div class="poster-preview-wrapper">
+            <div class="poster-preview-toolbar">
+                <span id="poster-preview-label">Poster Preview</span>
+                <div class="poster-toolbar-actions">
+                    <button class="gen-dl-btn" id="poster-print-btn"><i class="fa-solid fa-download"></i>
+                        Download</button>
+                    <button class="modal-close" id="poster-preview-close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="poster-preview-scroll">
+                <div id="poster-canvas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Participants Modal -->
+    <div class="modal-overlay hidden" id="participants-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-users"></i> <span id="pmodal-title">Event Participants</span></h3>
+                <button class="modal-close" id="pmodal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="pmodal-summary" id="pmodal-summary"></div>
+                <div class="pmodal-list" id="pmodal-list">
+                    <div class="empty-state">
+                        <p>Loading participants...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

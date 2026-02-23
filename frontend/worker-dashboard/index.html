@@ -29,6 +29,7 @@
                 </li>
                 <li><a href="#" data-section="calendar"><i class="fa-regular fa-calendar"></i> Calendar</a></li>
                 <li><a href="#" data-section="meetings"><i class="fa-solid fa-handshake"></i> Meetings</a></li>
+                <li><a href="#" data-section="events"><i class="fa-solid fa-calendar-star"></i> Events</a></li>
                 <li><a href="#" data-section="collisions"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
                 </li>
                 <li><a href="#" data-section="certificates"><i class="fa-solid fa-certificate"></i> Certificates</a>
@@ -63,9 +64,24 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" placeholder="Search...">
                     </div>
-                    <div class="notification-bell">
-                        <i class="fa-regular fa-bell"></i>
-                        <span class="badge" id="alert-badge">0</span>
+                    <!-- Notification Bell -->
+                    <div class="notif-wrapper" id="notif-wrapper">
+                        <button class="notif-bell-btn" id="notif-bell-btn" aria-label="Notifications">
+                            <i class="fa-regular fa-bell"></i>
+                            <span class="notif-badge hidden" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-dropdown hidden" id="notif-dropdown">
+                            <div class="notif-dropdown-header">
+                                <span class="notif-dropdown-title">Notifications</span>
+                                <div class="notif-header-actions">
+                                    <button class="notif-top-btn" id="notif-mark-all-btn">Mark all read</button>
+                                    <button class="notif-top-btn danger" id="notif-clear-btn">Clear read</button>
+                                </div>
+                            </div>
+                            <ul class="notif-list" id="notif-list">
+                                <li class="notif-empty">No notifications yet</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -183,6 +199,19 @@
                         <div class="day-detail-panel" id="day-detail">
                             <h4>Select a date to view details</h4>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ SECTION: Events ═══ -->
+            <div class="dashboard-grid section-content hidden" id="section-events">
+                <div class="section-header-bar">
+                    <h2>Upcoming Events</h2>
+                    <span class="section-subtitle">Company & organizational events you can join</span>
+                </div>
+                <div class="events-grid" id="events-list">
+                    <div class="empty-state"><i class="fa-regular fa-calendar"></i>
+                        <p>Loading events...</p>
                     </div>
                 </div>
             </div>
@@ -308,6 +337,39 @@
     </div>
 
     <script src="/worker-dashboard/script.js"></script>
+
+    <!-- ═══ Registration Modal ═══ -->
+    <div class="modal-overlay hidden" id="reg-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-check"></i> Register for Event</h3>
+                <button class="modal-close" id="reg-modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-event-info" id="modal-event-info"></div>
+                <form id="reg-form">
+                    <input type="hidden" id="reg-event-id">
+                    <div class="form-field">
+                        <label>Full Name</label>
+                        <input type="text" id="reg-name" placeholder="Your name" readonly>
+                    </div>
+                    <div class="form-field">
+                        <label>Email</label>
+                        <input type="email" id="reg-email" placeholder="Your email" readonly>
+                    </div>
+                    <div class="form-field">
+                        <label>Message / Note <span
+                                style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+                        <textarea id="reg-note" placeholder="Any questions or notes for the organizer..."
+                            rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary" id="reg-submit-btn">
+                        <i class="fa-solid fa-paper-plane"></i> Confirm Registration
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

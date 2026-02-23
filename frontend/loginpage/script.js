@@ -59,8 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 localStorage.setItem('tempus_user', JSON.stringify(data.user));
                 localStorage.setItem('tempus_token', data.token);
-                const selectedRole = localStorage.getItem('selectedRole') || 'WORKER';
-                if (selectedRole === 'ADMIN') {
+                // Use the role from the server (source of truth), not localStorage
+                const userRole = data.user.role || localStorage.getItem('selectedRole') || 'WORKER';
+                if (userRole === 'ADMIN') {
                     window.location.href = '/dashboard';
                 } else {
                     window.location.href = '/worker-dashboard';
@@ -120,7 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({
                         name: nameInput.value,
                         email: emailInput.value,
-                        password: passwordInput.value
+                        password: passwordInput.value,
+                        role: localStorage.getItem('selectedRole') || 'WORKER'
                     })
                 });
 

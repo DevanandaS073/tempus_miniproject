@@ -8,6 +8,7 @@ require('dotenv').config();
 // Routes
 const calendarRoutes = require('./routes/calendar');
 const eventsRoutes = require('./routes/events');
+const notificationsRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,6 +58,7 @@ app.use('/poster-gen', express.static(path.join(__dirname, '../frontend/poster-g
 // API Routes
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/events', eventsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
@@ -89,13 +91,14 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/signup', async (req, res) => {
-    const { email, password, name } = req.body;
+    const { email, password, name, role } = req.body;
     try {
         const user = await prisma.users.create({
             data: {
                 email,
                 name,
-                password_hash: password
+                password_hash: password,
+                role: (role === 'ADMIN' || role === 'WORKER') ? role : 'WORKER'
             }
         });
         res.json({ message: 'User created', user });

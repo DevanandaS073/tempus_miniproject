@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const { createNotification, broadcastNotification } = require('./notificationsController');
 
 // Get all public events (filterable by type)
 const getEvents = async (req, res) => {
@@ -11,6 +12,10 @@ const getEvents = async (req, res) => {
 
         const events = await prisma.events.findMany({
             where: whereClause,
+            include: {
+                creator: { select: { id: true, name: true, email: true } },
+                participants: { include: { user: { select: { id: true, name: true, email: true } } } }
+            },
             orderBy: { start_date: 'asc' }
         });
 
@@ -78,27 +83,46 @@ const createEvent = async (req, res) => {
         });
 
         res.status(201).json(newEvent);
+
+        // Notify all WORKERs about the new event (fire-and-forget)
+        const dateLabel = startDt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        broadcastNotification(
+            'WORKER',
+            'event_created',
+            `New Event: ${title}`,
+            `A new ${event_type} event has been scheduled on ${dateLabel}${location ? ' at ' + location : ''}.`,
+            '/worker-dashboard#events',
+            userId // exclude creator
+        );
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to create event' });
     }
 };
 
-// User "Joins" an event (Adds to their calendar)
+// User registers/joins an event
 const joinEvent = async (req, res) => {
     try {
-        const { event_id } = req.body;
+        const { event_id, note } = req.body;
         const userId = req.user.id;
 
         // 1. Find the event
         const event = await prisma.events.findUnique({ where: { event_id: parseInt(event_id) } });
         if (!event) return res.status(404).json({ error: 'Event not found' });
 
-        // 2. Get user's calendar
+        // 2. Check if already registered
+        const existing = await prisma.event_participants.findUnique({
+            where: { event_id_user_id: { event_id: parseInt(event_id), user_id: userId } }
+        });
+        if (existing) {
+            return res.status(409).json({ error: 'You have already registered for this event' });
+        }
+
+        // 3. Get user's calendar (create if missing)
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
         if (!calendar) calendar = await prisma.calendars.create({ data: { user_id: userId } });
 
-        // 3. Conflict Check — against meetings in user's calendar
+        // 4. Conflict Check — against meetings in user's calendar
         const meetingConflict = await prisma.meetings.findFirst({
             where: {
                 calendar_id: calendar.calendar_id,
@@ -114,7 +138,16 @@ const joinEvent = async (req, res) => {
             });
         }
 
-        // 4. Add to calendar as a meeting
+        // 5. Register in event_participants
+        await prisma.event_participants.create({
+            data: {
+                event_id: parseInt(event_id),
+                user_id: userId,
+                status: 'registered'
+            }
+        });
+
+        // 6. Add to personal calendar as a meeting entry
         const meeting = await prisma.meetings.create({
             data: {
                 calendar_id: calendar.calendar_id,
@@ -127,11 +160,63 @@ const joinEvent = async (req, res) => {
             }
         });
 
-        res.json({ message: 'Event added to calendar', meeting });
+        res.json({ message: 'Successfully registered for event', meeting });
+
+        // Notify the event creator that someone joined
+        const joiningUser = await prisma.users.findUnique({ where: { id: userId }, select: { name: true } });
+        const joinerName = joiningUser ? joiningUser.name : 'A user';
+        createNotification(
+            event.created_by,
+            'event_joined',
+            `New Registration: ${event.title}`,
+            `${joinerName} has registered for "${event.title}".`,
+            '/dashboard#events'
+        );
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to join event' });
     }
 };
 
-module.exports = { getEvents, createEvent, joinEvent };
+// Get participants for a specific event (admin only)
+const getEventParticipants = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const event = await prisma.events.findUnique({
+            where: { event_id: parseInt(id) },
+            include: {
+                creator: { select: { id: true, name: true } },
+                participants: {
+                    include: {
+                        user: { select: { id: true, name: true, email: true, role: true } }
+                    },
+                    orderBy: { id: 'asc' }
+                }
+            }
+        });
+
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+
+        res.json({
+            event_id: event.event_id,
+            title: event.title,
+            event_type: event.event_type,
+            start_date: event.start_date,
+            created_by: event.creator,
+            participant_count: event.participants.length,
+            participants: event.participants.map(p => ({
+                id: p.user.id,
+                name: p.user.name,
+                email: p.user.email,
+                role: p.user.role,
+                status: p.status
+            }))
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch participants' });
+    }
+};
+
+module.exports = { getEvents, createEvent, joinEvent, getEventParticipants };

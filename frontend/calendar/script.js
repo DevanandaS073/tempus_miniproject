@@ -130,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ].sort((a, b) => a.dateObj - b.dateObj);
 
         const now = new Date();
-        const upcomingItems = allItems.filter(item => item.dateObj >= now).slice(0, 10);
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // midnight today
+        const upcomingItems = allItems.filter(item => item.dateObj >= todayStart).slice(0, 10);
 
         if (upcomingItems.length === 0) {
             list.innerHTML = '<div class="empty-state"><i class="fa-regular fa-calendar"></i><p>No upcoming items</p></div>';
@@ -151,9 +152,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="meeting-info">
                     <h4>${item.title}</h4>
-                    <p>${isMeeting ? 'Personal Meeting' : 'Org Event: ' + item.event_type}</p>
+                    <p>${isMeeting ? 'Meeting' : 'Org Event: ' + item.event_type}</p>
                 </div>
+                ${isMeeting ? `<button class="delete-meeting-btn" data-id="${item.meeting_id}" title="Cancel meeting" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:15px;padding:4px 8px;border-radius:6px;transition:background 0.15s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='none'"><i class="fa-solid fa-trash"></i></button>` : ''}
             `;
+
+            // Wire delete button
+            if (isMeeting) {
+                el.querySelector('.delete-meeting-btn').addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const id = e.currentTarget.dataset.id;
+                    if (!confirm(`Cancel meeting "${item.title}"?`)) return;
+                    try {
+                        const res = await fetch(`/api/calendar/meetings/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('tempus_token')}` }
+                        });
+                        if (res.ok) {
+                            el.remove();
+                            fetchCalendarData(); // refresh calendar dots
+                        } else {
+                            alert('Failed to delete meeting.');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Network error.');
+                    }
+                });
+            }
+
             list.appendChild(el);
         });
     }
