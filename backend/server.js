@@ -8,6 +8,7 @@ require('dotenv').config();
 // Routes
 const calendarRoutes = require('./routes/calendar');
 const eventsRoutes = require('./routes/events');
+const statsRoutes = require('./routes/stats');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,37 +27,14 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, '../frontend/loginpage', 'index.html');
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            res.status(500).send('Error loading login page');
-        }
-    });
-});
-
-// Static Files
-app.use(express.static(path.join(__dirname, '../frontend/loginpage')));
-
-// Dashboard routes (serve index.html for root paths)
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dashboard/index.html'));
-});
-app.get('/worker-dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/worker-dashboard/index.html'));
-});
-app.get('/poster-gen', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/poster-gen/index.html'));
-});
-
-app.use('/dashboard', express.static(path.join(__dirname, '../frontend/dashboard')));
-app.use('/worker-dashboard', express.static(path.join(__dirname, '../frontend/worker-dashboard')));
-app.use('/calendar', express.static(path.join(__dirname, '../frontend/calendar')));
-app.use('/poster-gen', express.static(path.join(__dirname, '../frontend/poster-gen')));
+// Static Files: Serve the Vite React app from dist
+const frontendDistPath = path.join(__dirname, '../frontend-react/dist');
+app.use(express.static(frontendDistPath));
 
 // API Routes
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/events', eventsRoutes);
+app.use('/api/stats', statsRoutes);
 
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
@@ -125,6 +103,12 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         console.error(err);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+// Fallback route for React Router (Single Page Application)
+// Must be declared after all API routes
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend-react/dist', 'index.html'));
 });
 
 app.listen(PORT, () => {

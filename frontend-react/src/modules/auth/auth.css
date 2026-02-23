@@ -1,0 +1,422 @@
+/* ══════════════════════════════════════════════
+   Original Vanilla Chronos Mascot Styles
+   ══════════════════════════════════════════════ */
+
+.mascot-container {
+    position: absolute;
+    top: -85px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 100px;
+    z-index: 0;
+    pointer-events: none;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mascot {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.mascot-hand {
+    width: 12px;
+    height: 12px;
+    background: #cbd5e1;
+    border-radius: 50%;
+    position: absolute;
+    top: 75px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 20;
+    opacity: 0;
+}
+
+.mascot-hand.left {
+    left: 20px;
+}
+
+.mascot-hand.right {
+    right: 20px;
+}
+
+.mascot-head {
+    width: 80px;
+    height: 60px;
+    background: #e2e8f0;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.mascot-eyes {
+    display: flex;
+    gap: 14px;
+    animation: blink 4s infinite;
+}
+
+.eye {
+    width: 12px;
+    height: 12px;
+    background: #1e293b;
+    border-radius: 50%;
+    transition: transform 0.1s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes blink {
+
+    0%,
+    96%,
+    100% {
+        transform: scaleY(1);
+    }
+
+    98% {
+        transform: scaleY(0.1);
+    }
+}
+
+.mascot-antenna {
+    position: absolute;
+    top: -15px;
+    width: 4px;
+    height: 15px;
+    background: #94a3b8;
+}
+
+.antenna-bulb {
+    width: 10px;
+    height: 10px;
+    background: #ef4444;
+    border-radius: 50%;
+    position: absolute;
+    top: -6px;
+    left: -3px;
+    box-shadow: 0 0 10px #ef4444;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.mascot-body {
+    width: 60px;
+    height: 40px;
+    background: #cbd5e1;
+    border-radius: 10px 10px 0 0;
+    margin-top: -5px;
+    z-index: -1;
+}
+
+/* Animations and States */
+.mascot-container.hide {
+    transform: translate(-50%, 80px);
+}
+
+.mascot-container.look-up {
+    transform: translate(-50%, -10px);
+}
+
+.mascot.party .mascot-head {
+    background: #fef08a;
+}
+
+.mascot.party .antenna-bulb {
+    background: #3b82f6;
+    box-shadow: 0 0 10px #3b82f6;
+}
+
+.mascot.confused .mascot-head {
+    transform: rotate(-10deg) translateX(-5px);
+}
+
+.mascot.confused .eye.left {
+    transform: translateY(-2px);
+}
+
+.mascot.cover-eyes .mascot-hand {
+    top: 26px;
+    background: #94a3b8;
+    transform: scale(1.2);
+    opacity: 1;
+}
+
+.mascot.cover-eyes .mascot-hand.left {
+    left: 42px;
+    /* User explicit tweak */
+}
+
+.mascot.cover-eyes .mascot-hand.right {
+    right: 38px;
+}
+
+.mascot.close-eyes .eye {
+    transform: scaleY(0.1);
+    animation: none;
+}
+
+.mascot.close-eyes .mascot-eyes {
+    animation: none;
+}
+
+.mascot.look-away .mascot-head {
+    transform: rotate(15deg) translateX(5px);
+}
+
+.mascot.look-away .eye {
+    transform: translateX(-8px) scaleY(0.5);
+}
+
+.mascot.waving .mascot-hand.right {
+    animation: waveHand 2s;
+    transform-origin: bottom left;
+}
+
+@keyframes waveHand {
+    0% {
+        opacity: 1;
+        top: 110px;
+        right: 20px;
+        transform: rotate(0deg);
+    }
+
+    25% {
+        top: 30px;
+        right: -30px;
+        transform: rotate(45deg);
+    }
+
+    35% {
+        top: -10px;
+        right: -10px;
+        transform: rotate(0deg);
+    }
+
+    45% {
+        top: 30px;
+        right: -30px;
+        transform: rotate(45deg);
+    }
+
+    55% {
+        top: -10px;
+        right: -10px;
+        transform: rotate(0deg);
+    }
+
+    75% {
+        top: 30px;
+        right: -25px;
+        transform: rotate(45deg);
+    }
+
+    100% {
+        opacity: 1;
+        top: 110px;
+        right: 20px;
+        transform: rotate(0deg);
+    }
+}
+
+.mascot.waving .mascot-head {
+    animation: headBob 2s ease-in-out;
+}
+
+@keyframes headBob {
+
+    0%,
+    25%,
+    45%,
+    75%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    35%,
+    55% {
+        transform: rotate(-10deg);
+    }
+}
+
+.mascot.waving .eye {
+    transform: scaleY(0.05) !important;
+    /* User explicit tweak */
+    animation: none;
+}
+
+.mascot.waving .mascot-eyes {
+    animation: none;
+    position: relative;
+}
+
+.mascot.waving .mascot-head::after {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 8px;
+    border: 3px solid #1e293b;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+}
+
+.eye::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    top: 4px;
+    left: 4px;
+    transition: all 0.1s;
+}
+
+.mascot.cover-eyes .eye::after {
+    opacity: 0;
+}
+
+.mascot {
+    animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-3px) scale(1.02);
+    }
+}
+
+.mascot.waving,
+.mascot.shake,
+.mascot.cover-eyes {
+    animation: none;
+}
+
+.mascot.shake {
+    animation: shakeHead 0.6s ease-in-out;
+}
+
+@keyframes shakeHead {
+
+    0%,
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+
+    15% {
+        transform: translateX(-8px) rotate(-5deg);
+    }
+
+    30% {
+        transform: translateX(8px) rotate(5deg);
+    }
+
+    45% {
+        transform: translateX(-6px) rotate(-3deg);
+    }
+
+    60% {
+        transform: translateX(6px) rotate(3deg);
+    }
+
+    75% {
+        transform: translateX(-3px) rotate(-1deg);
+    }
+
+    90% {
+        transform: translateX(3px) rotate(1deg);
+    }
+}
+
+.mascot.sad .mascot-head {
+    background: #fca5a5;
+}
+
+.mascot.sad .antenna-bulb {
+    background: #94a3b8;
+    box-shadow: 0 0 5px #94a3b8;
+    animation: none;
+}
+
+.mascot.sad .eye {
+    transform: scaleY(0.6) translateY(2px);
+}
+
+.mascot.sad .mascot-eyes::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 3px;
+    background: #1e293b;
+    border-radius: 0 0 6px 6px;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* React specific helpers */
+.login-card-enter {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.view-enter {
+    animation: fadeInSlide 0.5s forwards;
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: skewX(-20deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    100% {
+        left: 200%;
+    }
+}

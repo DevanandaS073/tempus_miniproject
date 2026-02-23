@@ -129,11 +129,57 @@ const joinEvent = async (req, res) => {
             }
         });
 
-        res.json({ message: 'Event added to calendar', meeting });
+        // 5. Add user to event_participants to track RSVPs
+        try {
+            await prisma.event_participants.create({
+                data: {
+                    event_id: parseInt(event_id),
+                    user_id: userId,
+                    status: 'registered'
+                }
+            });
+        } catch (participantError) {
+            // Ignore unique constraint violations (P2002) if they are already registered
+            if (participantError.code !== 'P2002') {
+                console.error('Error adding to event participants:', participantError);
+            }
+        }
+
+        res.json({ message: 'Event added to calendar and RSVP recorded', meeting });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to join event' });
     }
 };
 
-module.exports = { getEvents, createEvent, joinEvent };
+// Get participants for a specific event (Admin view)
+const getEventParticipants = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const participants = await prisma.event_participants.findMany({
+            where: { event_id: parseInt(id) },
+            include: { user: { select: { id: true, name: true, email: true, role: true } } }
+        });
+        res.json(participants);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch participants' });
+    }
+};
+
+// Get all events the logged-in user has joined (Worker/Personal view)
+const getUserEvents = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userEvents = await prisma.event_participants.findMany({
+            where: { user_id: userId },
+            include: { event: true } // Include the full event details
+        });
+        res.json(userEvents);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch user events' });
+    }
+};
+
+module.exports = { getEvents, createEvent, joinEvent, getEventParticipants, getUserEvents };

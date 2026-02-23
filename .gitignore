@@ -16,6 +16,18 @@ backend/.env.local
 backend/.env.development.local
 backend/.env.test.local
 backend/.env.production.local
+frontend-react/.env
+frontend-react/.env.local
+frontend-react/.env.development.local
+frontend-react/.env.test.local
+frontend-react/.env.production.local
+
+# Frontend React Specifics
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/dist-ssr/
+frontend-react/.eslintrc.cjs
+frontend-react/package-lock.json
 
 # Logs
 npm-debug.log*
