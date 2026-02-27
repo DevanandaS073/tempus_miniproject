@@ -40,14 +40,16 @@ export default function DayDetail({ selectedDate, events = [], meetings = [], on
                             {dayMeetings.map((m, i) => {
                                 const timeStr = m.time || new Date(m.start_time || m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                                 const [timeText, ampmText] = timeStr.split(' ');
+                                const isEvent = m.title && m.title.startsWith('[Event] ');
+
                                 return (
-                                    <div key={i} className="meeting-item">
+                                    <div key={i} className={`meeting-item ${isEvent ? 'is-event' : ''}`}>
                                         <div className="meeting-time">
                                             <span>{timeText}</span><span>{ampmText}</span>
                                         </div>
                                         <div className="meeting-info">
-                                            <h4>{m.title}</h4>
-                                            <p>{m.participants || ''}</p>
+                                            <h4>{isEvent ? m.title.replace('[Event] ', '') : m.title}</h4>
+                                            <p>{isEvent ? 'Joined Event' : (m.participants || '')}</p>
                                         </div>
                                     </div>
                                 )

@@ -22,22 +22,24 @@ export default function MeetingList({ meetings = [], variant = 'preview', onDele
                 const timeStr = m.time || new Date(m.start_time || m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const [timeText, ampmText] = timeStr.split(' ');
 
+                const isEvent = m.title && m.title.startsWith('[Event] ');
                 let statusClass = 'upcoming';
                 if (m.status === 'completed') statusClass = 'completed';
                 if (m.status === 'cancelled') statusClass = 'cancelled';
+                if (isEvent) statusClass = 'event-joined';
 
                 return (
-                    <div key={m.id || i} className="meeting-item" style={{ position: 'relative' }}>
+                    <div key={m.id || i} className={`meeting-item ${isEvent ? 'is-event' : ''}`} style={{ position: 'relative' }}>
                         <div className="meeting-time">
                             <span>{timeText || timeStr}</span>
                             <span>{ampmText || ''}</span>
                         </div>
                         <div className="meeting-info">
-                            <h4>{m.title}</h4>
-                            <p>{m.participants || m.organizer || ''}</p>
+                            <h4>{isEvent ? m.title.replace('[Event] ', '') : m.title}</h4>
+                            <p>{isEvent ? '' : (m.participants || m.organizer || '')}</p>
                         </div>
                         <div className="meeting-status">
-                            <span className={`status-badge ${statusClass}`}>{m.status || 'Scheduled'}</span>
+                            <span className={`status-pill ${statusClass}`}>{isEvent ? 'Joined' : (m.status || 'Scheduled')}</span>
                             {onDelete && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onDelete(m.id); }}

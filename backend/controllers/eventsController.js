@@ -9,10 +9,23 @@ const getEvents = async (req, res) => {
         if (type) whereClause.event_type = type;
         if (search) whereClause.title = { contains: search, mode: 'insensitive' };
 
-        const events = await prisma.events.findMany({
+        let events = await prisma.events.findMany({
             where: whereClause,
             orderBy: { start_date: 'asc' }
         });
+
+        if (req.user) {
+            const joinedEvents = await prisma.event_participants.findMany({
+                where: { user_id: req.user.id },
+                select: { event_id: true }
+            });
+            const joinedEventIds = new Set(joinedEvents.map(je => je.event_id));
+
+            events = events.map(event => ({
+                ...event,
+                isJoined: joinedEventIds.has(event.event_id)
+            }));
+        }
 
         res.json(events);
     } catch (error) {
@@ -100,36 +113,7 @@ const joinEvent = async (req, res) => {
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
         if (!calendar) calendar = await prisma.calendars.create({ data: { user_id: userId } });
 
-        // 3. Conflict Check — against meetings in user's calendar
-        const meetingConflict = await prisma.meetings.findFirst({
-            where: {
-                calendar_id: calendar.calendar_id,
-                start_time: { lt: event.end_date },
-                end_time: { gt: event.start_date }
-            }
-        });
-
-        if (meetingConflict) {
-            return res.status(409).json({
-                error: `Event time conflicts with your meeting: "${meetingConflict.title}"`,
-                conflictWith: { type: 'meeting', title: meetingConflict.title, start: meetingConflict.start_time, end: meetingConflict.end_time }
-            });
-        }
-
-        // 4. Add to calendar as a meeting
-        const meeting = await prisma.meetings.create({
-            data: {
-                calendar_id: calendar.calendar_id,
-                title: `[Event] ${event.title}`,
-                description: event.description,
-                start_time: event.start_date,
-                end_time: event.end_date,
-                created_by: userId,
-                status: 'scheduled'
-            }
-        });
-
-        // 5. Add user to event_participants to track RSVPs
+        // 3. Add user to event_participants to track RSVPs
         try {
             await prisma.event_participants.create({
                 data: {
@@ -145,7 +129,7 @@ const joinEvent = async (req, res) => {
             }
         }
 
-        res.json({ message: 'Event added to calendar and RSVP recorded', meeting });
+        res.json({ message: 'Rsvp recorded successfully' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to join event' });

@@ -1,3 +1,5 @@
+import NotificationDropdown from './NotificationDropdown';
+
 export default function TopBar({ title, user, alertCount = 0 }) {
     const avatarUrl = user?.name
         ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=3b82f6&color=fff`
@@ -23,10 +25,9 @@ export default function TopBar({ title, user, alertCount = 0 }) {
                     <i className="fa-solid fa-magnifying-glass"></i>
                     <input type="text" placeholder="Search..." />
                 </div>
-                <div className="notification-bell">
-                    <i className="fa-regular fa-bell"></i>
-                    <span className="badge" id="alert-badge">{alertCount}</span>
-                </div>
+
+                <NotificationDropdown />
+
             </div>
         </header>
     )

@@ -15,7 +15,10 @@ const getMeetings = async (req, res) => {
         }
 
         const meetings = await prisma.meetings.findMany({
-            where: { calendar_id: calendar.calendar_id },
+            where: {
+                calendar_id: calendar.calendar_id,
+                NOT: { title: { startsWith: '[Event]' } }
+            },
             include: { participants: true },
             orderBy: { start_time: 'asc' }
         });

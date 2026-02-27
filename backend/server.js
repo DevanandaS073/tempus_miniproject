@@ -9,6 +9,8 @@ require('dotenv').config();
 const calendarRoutes = require('./routes/calendar');
 const eventsRoutes = require('./routes/events');
 const statsRoutes = require('./routes/stats');
+const notificationsRoutes = require('./routes/notifications'); // Import Notifications API
+const authRoutes = require('./routes/auth'); // Import Auth API
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,74 +37,13 @@ app.use(express.static(frontendDistPath));
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/notifications', notificationsRoutes); // Register Notifications API
+app.use('/api/auth', authRoutes); // Refactored Auth Router
 
-app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const user = await prisma.users.findUnique({ where: { email } });
-
-        if (!user) {
-            return res.status(401).json({ error: 'User not found' });
-        }
-
-        if (user.password_hash !== password) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'tempus-secret-key',
-            { expiresIn: '1h' }
-        );
-
-        res.json({
-            message: 'Login successful',
-            user: { id: user.id, name: user.name, email: user.email, role: user.role },
-            token
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-app.post('/api/auth/signup', async (req, res) => {
-    const { email, password, name, role } = req.body;
-    // Map frontend role selection to Prisma enum
-    const dbRole = (role && role.toUpperCase() === 'ADMIN') ? 'admin' : 'user';
-    try {
-        const user = await prisma.users.create({
-            data: {
-                email,
-                name,
-                password_hash: password,
-                role: dbRole
-            }
-        });
-        res.json({ message: 'User created', user });
-    } catch (err) {
-        if (err.code === 'P2002') {
-            return res.status(400).json({ error: 'Email already exists' });
-        }
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-app.post('/api/auth/forgot-password', async (req, res) => {
-    const { email } = req.body;
-    try {
-        const user = await prisma.users.findUnique({ where: { email } });
-        if (!user) {
-            console.log(`Forgot password requested for non-existent email: ${email}`);
-        } else {
-            console.log(`Password reset requested for: ${email}`);
-        }
-
-        res.json({ message: 'If an account exists, a reset link has been sent.' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Internal server error' });
 });
 
 // Fallback route for React Router (Single Page Application)

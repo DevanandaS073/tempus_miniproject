@@ -12,6 +12,7 @@ import CertificateGrid from '../../components/CertificateGrid'
 import PosterGrid from '../../components/PosterGrid'
 import ReportList from '../../components/ReportList'
 import SettingsPanel from '../../components/SettingsPanel'
+import JoinEventModal from '../../components/JoinEventModal'
 import BlobBackground from '../../components/BlobBackground'
 import { detectCollisions } from '../../utils/collisions'
 import '../dashboard/dashboard.css'
@@ -20,6 +21,7 @@ const WORKER_NAV = [
     { icon: 'fa-gauge', label: 'Dashboard', sectionKey: 'overview' },
     { icon: 'fa-calendar', label: 'Calendar', sectionKey: 'calendar' },
     { icon: 'fa-handshake', label: 'Meetings', sectionKey: 'meetings' },
+    { icon: 'fa-calendar-star', label: 'Events', sectionKey: 'events' },
     { icon: 'fa-triangle-exclamation', label: 'Alerts', sectionKey: 'collisions' },
     { icon: 'fa-certificate', label: 'Certificates', sectionKey: 'certificates' },
     { icon: 'fa-image', label: 'Posters', sectionKey: 'posters' },
@@ -31,6 +33,7 @@ const SECTION_TITLES = {
     overview: 'Dashboard',
     calendar: 'My Calendar',
     meetings: 'All Meetings',
+    events: 'Organizational Events',
     collisions: 'Collision Alerts',
     certificates: 'Certificates',
     posters: 'Event Posters',
@@ -44,6 +47,7 @@ export default function WorkerDashboard() {
     const [selectedDate, setSelectedDate] = useState(null)
     const [meetingTab, setMeetingTab] = useState('upcoming')
     const [showEventModal, setShowEventModal] = useState(false)
+    const [selectedEventToJoin, setSelectedEventToJoin] = useState(null)
 
     const [data, setData] = useState({
         meetings: [], events: [], collisions: [],
@@ -230,6 +234,60 @@ export default function WorkerDashboard() {
                     </div>
                 )
 
+            case 'events':
+                return (
+                    <div className="dashboard-grid section-content" id="section-events">
+                        <div className="section-header-bar">
+                            <h2>Organizational Events</h2>
+                        </div>
+                        <div className="events-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                            {data.events.length === 0 ? (
+                                <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
+                                    <i className="fa-regular fa-calendar-star" />
+                                    <p>No upcoming events</p>
+                                </div>
+                            ) : (
+                                data.events.map(event => (
+                                    <div key={event.id} className="event-card card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        <div className="event-info">
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                                                <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>{event.title}</h4>
+                                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)', borderRadius: '20px', fontWeight: 'bold' }}>{event.type}</span>
+                                            </div>
+                                            <p style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{event.description}</p>
+                                            <div className="event-meta" style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                <span><i className="fa-regular fa-clock" style={{ width: '16px', color: 'var(--primary-color)' }}></i> {new Date(event.date).toLocaleString()}</span>
+                                                <span><i className="fa-solid fa-location-dot" style={{ width: '16px', color: 'var(--primary-color)' }}></i> {event.location || 'TBA'}</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            className={event.isJoined ? 'btn-secondary' : 'btn-primary'}
+                                            style={{
+                                                marginTop: 'auto',
+                                                width: '100%',
+                                                backgroundColor: event.isJoined ? 'rgba(34, 197, 94, 0.1)' : undefined,
+                                                color: event.isJoined ? '#4ade80' : undefined,
+                                                borderColor: event.isJoined ? 'rgba(34, 197, 94, 0.2)' : undefined,
+                                                cursor: event.isJoined ? 'default' : 'pointer'
+                                            }}
+                                            onClick={() => {
+                                                if (!event.isJoined) setSelectedEventToJoin(event)
+                                            }}
+                                            disabled={event.isJoined}
+                                        >
+                                            {event.isJoined ? (
+                                                <><i className="fa-solid fa-check mr-2"></i> Joined</>
+                                            ) : (
+                                                <><i className="fa-solid fa-user-plus mr-2"></i> Join Event</>
+                                            )}
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )
+
             case 'collisions':
                 return (
                     <div className="dashboard-grid section-content" id="section-collisions">
@@ -294,6 +352,14 @@ export default function WorkerDashboard() {
                 </main>
             </div>
             {showEventModal && <EventModal isOpen={showEventModal} onClose={() => setShowEventModal(false)} onCreated={fetchData} />}
+            {selectedEventToJoin && (
+                <JoinEventModal
+                    event={selectedEventToJoin}
+                    user={user}
+                    onClose={() => setSelectedEventToJoin(null)}
+                    onSuccess={(msg) => { alert(msg); setSelectedEventToJoin(null); fetchData() }}
+                />
+            )}
         </Fragment>
     )
 }

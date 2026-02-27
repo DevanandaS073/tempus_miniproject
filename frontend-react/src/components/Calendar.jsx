@@ -49,7 +49,15 @@ export default function Calendar({ meetings = [], events = [], onDayClick, large
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                     const day = i + 1
                     const hasMtg = hasMeeting(day)
-                    const hasEvt = hasEvent(day)
+
+                    // Find if there's an event on this day, and if we've joined any of them
+                    const dayEvents = events.filter(e => {
+                        const d = new Date(e.start_date || e.date)
+                        return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year
+                    })
+                    const hasEvt = dayEvents.length > 0
+                    const isJoinedEvt = dayEvents.some(e => e.isJoined)
+
                     const today_ = isToday(day)
 
                     return (
@@ -62,7 +70,7 @@ export default function Calendar({ meetings = [], events = [], onDayClick, large
                             {(hasMtg || hasEvt) && (
                                 <div className="day-dots">
                                     {hasMtg && <div className="dot meeting-dot" />}
-                                    {hasEvt && <div className="dot event-dot" />}
+                                    {hasEvt && <div className={`dot ${isJoinedEvt ? 'joined-event-dot' : 'event-dot'}`} />}
                                 </div>
                             )}
                         </div>
