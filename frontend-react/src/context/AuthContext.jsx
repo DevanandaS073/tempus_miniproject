@@ -5,6 +5,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [token, setToken] = useState(null)
+    const [isInitializing, setIsInitializing] = useState(true)
 
     // Hydrate from localStorage on mount
     useEffect(() => {
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
                 localStorage.removeItem('tempus_user')
             }
         }
+        setIsInitializing(false)
     }, [])
 
     const login = async (email, password) => {
@@ -66,10 +68,17 @@ export function AuthProvider({ children }) {
         setUser(null)
     }
 
+    const updateSession = (newToken, newUser) => {
+        localStorage.setItem('tempus_token', newToken)
+        localStorage.setItem('tempus_user', JSON.stringify(newUser))
+        setToken(newToken)
+        setUser(newUser)
+    }
+
     return (
         <AuthContext.Provider value={{
-            user, token, isAuthenticated: !!token,
-            login, signup, forgotPassword, logout
+            user, token, isAuthenticated: !!token, isInitializing,
+            login, signup, forgotPassword, logout, updateSession
         }}>
             {children}
         </AuthContext.Provider>

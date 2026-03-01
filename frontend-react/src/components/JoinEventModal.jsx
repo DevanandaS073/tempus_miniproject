@@ -52,7 +52,7 @@ export default function JoinEventModal({ event, user, onClose, onSuccess }) {
                     </button>
                 </div>
                 <div>
-                    <div className="bg-white/5 p-4 rounded-lg mb-6 border border-white/10">
+                    <div className="bg-white/5 p-4 rounded-none mb-6 border border-white/10">
                         <h4 className="text-white font-medium mb-1">{event.title}</h4>
                         <p className="text-sm text-zinc-400 m-0">
                             <i className="fa-regular fa-clock mr-2 text-primary-color"></i>
@@ -61,7 +61,7 @@ export default function JoinEventModal({ event, user, onClose, onSuccess }) {
                     </div>
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-6 flex items-center">
+                        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-none px-4 py-3 mb-6 flex items-center">
                             <i className="fa-solid fa-circle-exclamation mr-2"></i> {error}
                         </div>
                     )}
@@ -70,12 +70,12 @@ export default function JoinEventModal({ event, user, onClose, onSuccess }) {
                         <div>
                             <label className="text-zinc-400 text-xs block mb-1">Full Name</label>
                             <input type="text" value={user?.name || 'Worker'} readOnly disabled
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed" />
+                                className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed" />
                         </div>
                         <div>
                             <label className="text-zinc-400 text-xs block mb-1">Role</label>
                             <input type="text" value={user?.role || 'Worker'} readOnly disabled
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed" />
+                                className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed" />
                         </div>
                         <div>
                             <label className="text-zinc-400 text-xs block mb-1">Message / Note <span className="font-normal opacity-70">(optional)</span></label>
@@ -84,14 +84,14 @@ export default function JoinEventModal({ event, user, onClose, onSuccess }) {
                                 rows="3"
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors resize-none"
+                                className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors resize-none"
                             ></textarea>
                         </div>
                         <div className="flex gap-3 pt-4">
-                            <button type="button" className="px-5 py-2.5 rounded-lg font-medium bg-zinc-800 hover:bg-zinc-700 text-white transition-colors" onClick={onClose} disabled={isSubmitting}>
+                            <button type="button" className="px-5 py-2.5 rounded-none font-medium bg-zinc-800 hover:bg-zinc-700 text-white transition-colors" onClick={onClose} disabled={isSubmitting}>
                                 Cancel
                             </button>
-                            <button type="submit" disabled={isSubmitting} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center">
+                            <button type="submit" disabled={isSubmitting} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-none font-medium transition-colors disabled:opacity-50 flex items-center justify-center">
                                 {isSubmitting ? 'Registering...' : <><i className="fa-solid fa-paper-plane mr-2"></i> Confirm Registration</>}
                             </button>
                         </div>

@@ -1,17 +1,47 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import TopBar from '../../components/TopBar';
 
 export default function FreeAgentPage() {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout, updateSession } = useAuth();
     const [loadingJoin, setLoadingJoin] = useState(false);
     const [joinCode, setJoinCode] = useState('');
     const [menuOpen, setMenuOpen] = useState(false);
 
-    const handleCreateCompany = () => {
-        // Phase 3 Endpoint: API call to create company
-        console.log("Create company clicked");
+    // Create Company State
+    const [isCreating, setIsCreating] = useState(false);
+    const [companyName, setCompanyName] = useState('');
+    const [loadingCreate, setLoadingCreate] = useState(false);
+    const [createError, setCreateError] = useState(null);
+
+    const handleCreateCompany = async (e) => {
+        e.preventDefault();
+        setLoadingCreate(true);
+        setCreateError(null);
+
+        try {
+            const token = localStorage.getItem('tempus_token');
+            const res = await fetch('/api/companies', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: companyName })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to initialize workspace');
+
+            updateSession(data.token, data.user); // Refresh context with new token and company logic
+            navigate('/dashboard', { replace: true });
+        } catch (err) {
+            setCreateError(err.message);
+        } finally {
+            setLoadingCreate(false);
+        }
     };
 
     const handleLogout = () => {
@@ -30,38 +60,14 @@ export default function FreeAgentPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white relative flex flex-col items-center overflow-hidden">
+        <div className="min-h-screen bg-slate-900 text-white relative flex flex-col items-center overflow-x-hidden">
+            <TopBar showLogo={true} />
+
             {/* Background Animated Orbs */}
             <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse pointer-events-none"></div>
             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-teal-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse pointer-events-none" style={{ animationDelay: '1000ms' }}></div>
 
-            {/* Top Header - Neu-Brutalist, Zero Border Radius */}
-            <header className="w-full h-16 bg-slate-950/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 z-10 rounded-none relative">
-                <div className="font-bold text-2xl tracking-[0.2em] text-white">TEMPUS</div>
-                <div className="flex items-center gap-6">
-                    <button className="text-slate-400 hover:text-white transition-colors" title="Notifications">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="square" strokeLinejoin="miter" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                        </svg>
-                    </button>
-
-                    <div className="relative cursor-pointer" onClick={() => setMenuOpen(!menuOpen)}>
-                        <div className="w-10 h-10 bg-slate-800 border border-slate-700 rounded-none flex items-center justify-center font-bold text-sm uppercase hover:bg-slate-700 transition-colors">
-                            {user?.first_name?.charAt(0) || 'U'}{user?.last_name?.charAt(0) || ''}
-                        </div>
-                        {/* Dropdown Menu (Click Triggered) */}
-                        {menuOpen && (
-                            <div className="absolute right-0 mt-2 w-48 flex flex-col bg-slate-900 border border-slate-700 shadow-2xl rounded-none py-1 z-50">
-                                <button className="px-4 py-3 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors rounded-none font-medium tracking-wide">⚙️ Account Settings</button>
-                                <button onClick={handleLogout} className="px-4 py-3 text-left text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors rounded-none border-t border-slate-800 font-medium tracking-wide">🚪 Log Out</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content Area */}
-            <main className="flex-1 w-full max-w-6xl flex flex-col items-center justify-center p-8 z-10 pb-32">
+            <main className="flex-1 w-full max-w-6xl flex flex-col items-center justify-center p-8 z-10 pb-32 mt-8">
                 <h1 className="text-4xl md:text-5xl font-light text-slate-200 mb-2">Welcome, {user?.first_name || 'Agent'}.</h1>
                 <p className="text-slate-400 text-lg mb-16 text-center max-w-xl">Your workspace is currently unassigned. To access the Tempus platform, you must establish your organizational context.</p>
 
@@ -79,12 +85,44 @@ export default function FreeAgentPage() {
                             <p className="text-slate-400 mb-8">I am a founder or administrator setting up a new organizational database.</p>
                         </div>
 
-                        <button
-                            onClick={handleCreateCompany}
-                            className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-[0.1em] uppercase transition-colors rounded-none"
-                        >
-                            Configure Hub
-                        </button>
+                        {isCreating ? (
+                            <form onSubmit={handleCreateCompany} className="w-full flex flex-col gap-4 animate-in fade-in zoom-in duration-200">
+                                {createError && <p className="text-red-400 font-mono text-sm uppercase tracking-widest">{createError}</p>}
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    placeholder="Enter Workspace Name"
+                                    value={companyName}
+                                    onChange={(e) => setCompanyName(e.target.value)}
+                                    className="w-full bg-slate-950 border border-purple-500/50 text-white px-4 py-4 focus:outline-none focus:border-purple-400 transition-colors text-center text-lg tracking-widest rounded-none placeholder:text-slate-600 placeholder:tracking-normal placeholder:font-light"
+                                    required
+                                />
+                                <div className="flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCreating(false)}
+                                        disabled={loadingCreate}
+                                        className="flex-1 py-4 border border-slate-700 hover:border-slate-500 text-slate-400 font-bold tracking-[0.1em] uppercase transition-colors rounded-none"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loadingCreate || !companyName.trim()}
+                                        className="flex-[2] py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-[0.1em] uppercase transition-colors rounded-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loadingCreate ? 'Processing...' : 'Confirm'}
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <button
+                                onClick={() => setIsCreating(true)}
+                                className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-[0.1em] uppercase transition-colors rounded-none"
+                            >
+                                Configure Hub
+                            </button>
+                        )}
                     </div>
 
                     {/* Pillar 2: Join Company */}

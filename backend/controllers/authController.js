@@ -35,6 +35,7 @@ exports.login = async (req, res) => {
                 id: user.id,
                 email: user.email,
                 company_id: user.company_id,
+                role: user.role?.name,
                 permissions // Store the array of strings directly in the JWT
             },
             process.env.JWT_SECRET || 'tempus-secret-key',
@@ -49,6 +50,7 @@ exports.login = async (req, res) => {
                 first_name: user.first_name,
                 last_name: user.last_name,
                 company_id: user.company_id,
+                role: user.role?.name,
                 permissions
             }
         });

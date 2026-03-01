@@ -68,7 +68,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-4">
+                    <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-none px-4 py-2 mb-4">
                         {error}
                     </div>
                 )}
@@ -80,7 +80,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                             value={form.title}
                             onChange={e => setForm({ ...form, title: e.target.value })}
                             required
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                            className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
                             placeholder="Meeting title"
                         />
                     </div>
@@ -91,7 +91,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                                 type="date"
                                 value={form.date}
                                 onChange={e => setForm({ ...form, date: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                                className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
                             />
                         </div>
                         <div>
@@ -100,7 +100,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                                 type="time"
                                 value={form.time}
                                 onChange={e => setForm({ ...form, time: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                                className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
                             />
                         </div>
                     </div>
@@ -113,13 +113,13 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                             step="0.5"
                             min="0.5"
                             max="8"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                            className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+                        className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-none font-medium transition-colors disabled:opacity-50"
                     >
                         {loading ? 'Creating...' : 'Create Meeting'}
                     </button>

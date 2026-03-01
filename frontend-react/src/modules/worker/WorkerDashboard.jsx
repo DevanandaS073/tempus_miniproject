@@ -1,53 +1,15 @@
 import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import Sidebar from '../../components/Sidebar'
-import TopBar from '../../components/TopBar'
 import StatCard from '../../components/StatCard'
 import Calendar from '../../components/Calendar'
-import DayDetail from '../../components/DayDetail'
 import MeetingList from '../../components/MeetingList'
-import EventModal from '../../components/EventModal'
 import CollisionList from '../../components/CollisionList'
-import CertificateGrid from '../../components/CertificateGrid'
-import PosterGrid from '../../components/PosterGrid'
-import ReportList from '../../components/ReportList'
-import SettingsPanel from '../../components/SettingsPanel'
-import JoinEventModal from '../../components/JoinEventModal'
-import BlobBackground from '../../components/BlobBackground'
 import { detectCollisions } from '../../utils/collisions'
 import '../dashboard/dashboard.css'
 
-const WORKER_NAV = [
-    { icon: 'fa-gauge', label: 'Dashboard', sectionKey: 'overview' },
-    { icon: 'fa-calendar', label: 'Calendar', sectionKey: 'calendar' },
-    { icon: 'fa-handshake', label: 'Meetings', sectionKey: 'meetings' },
-    { icon: 'fa-calendar-star', label: 'Events', sectionKey: 'events' },
-    { icon: 'fa-triangle-exclamation', label: 'Alerts', sectionKey: 'collisions' },
-    { icon: 'fa-certificate', label: 'Certificates', sectionKey: 'certificates' },
-    { icon: 'fa-image', label: 'Posters', sectionKey: 'posters' },
-    { icon: 'fa-file-lines', label: 'Reports', sectionKey: 'reports' },
-    { icon: 'fa-gear', label: 'Settings', sectionKey: 'settings' },
-]
-
-const SECTION_TITLES = {
-    overview: 'Dashboard',
-    calendar: 'My Calendar',
-    meetings: 'All Meetings',
-    events: 'Organizational Events',
-    collisions: 'Collision Alerts',
-    certificates: 'Certificates',
-    posters: 'Event Posters',
-    reports: 'Reports',
-    settings: 'Profile & Settings',
-}
-
 export default function WorkerDashboard() {
-    const { user, token } = useAuth()
-    const [activeSection, setActiveSection] = useState('overview')
+    const { token } = useAuth()
     const [selectedDate, setSelectedDate] = useState(null)
-    const [meetingTab, setMeetingTab] = useState('upcoming')
-    const [showEventModal, setShowEventModal] = useState(false)
-    const [selectedEventToJoin, setSelectedEventToJoin] = useState(null)
 
     const [data, setData] = useState({
         meetings: [], events: [], collisions: [],
@@ -136,230 +98,49 @@ export default function WorkerDashboard() {
         )
     }
 
-    const renderSection = () => {
-        switch (activeSection) {
-            case 'overview':
-                return (
-                    <div className="dashboard-grid section-content" id="section-overview">
-                        <div className="grid-section stats-row">
-                            <StatCard icon="fa-video" title="Personal Meetings" value={data.stats.meetings} color="blue" />
-                            <StatCard icon="fa-calendar-check" title="Upcoming Events" value={data.stats.events} color="green" />
-                            <StatCard icon="fa-clock" title="Meeting Hours" value={data.stats.hours} color="purple" />
-                            <StatCard icon="fa-triangle-exclamation" title="Collision Alerts" value={data.stats.collisions} color="orange" />
-                        </div>
-                        <div className="grid-section main-panels">
-                            <div className="panel-column left">
-                                <div className="card calendar-card">
-                                    <div className="card-header">
-                                        <h3>Calendar Overview</h3>
-                                    </div>
-                                    <div className="card-body">
-                                        <Calendar meetings={data.meetings} events={data.events} onDayClick={handleDayClick} />
-                                    </div>
-                                </div>
-                                <div className="card upcoming-card">
-                                    <div className="card-header">
-                                        <h3>Upcoming Meetings</h3>
-                                        <a href="#" className="view-all" onClick={(e) => { e.preventDefault(); setActiveSection('meetings') }}>View All</a>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="meetings-list">
-                                            <MeetingList meetings={data.meetings} variant="preview" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="panel-column right">
-                                <div className="card collision-card">
-                                    <div className="card-header">
-                                        <h3>Collision Alerts</h3>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="collision-list">
-                                            <CollisionList collisions={data.collisions} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="card automation-card">
-                                    <div className="card-header">
-                                        <h3>Recent Certificates</h3>
-                                    </div>
-                                    <div className="card-body">
-                                        <CertPreview />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-
-            case 'calendar':
-                return (
-                    <div className="dashboard-grid section-content" id="section-calendar">
-                        <div className="card" style={{ minHeight: '500px', marginBottom: selectedDate ? '16px' : '0' }}>
-                            <div className="card-header">
-                                <h3>My Calendar</h3>
-                            </div>
-                            <div className="card-body">
-                                <Calendar meetings={data.meetings} events={data.events} onDayClick={handleDayClick} large={true} />
-                            </div>
-                        </div>
-                        {selectedDate && (
-                            <div className="card">
-                                <div className="card-body">
-                                    <DayDetail selectedDate={selectedDate} events={data.events} meetings={data.meetings} onClose={() => setSelectedDate(null)} />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )
-
-            case 'meetings':
-                return (
-                    <div className="dashboard-grid section-content" id="section-meetings">
-                        <div className="section-header-bar">
-                            <h2>All Meetings</h2>
-                            <div className="tab-bar">
-                                <button className={`tab ${meetingTab === 'upcoming' ? 'active' : ''}`} onClick={() => setMeetingTab('upcoming')}>Upcoming</button>
-                                <button className={`tab ${meetingTab === 'past' ? 'active' : ''}`} onClick={() => setMeetingTab('past')}>Past</button>
-                            </div>
-                        </div>
-                        <div className="card">
-                            <div className="card-body">
-                                <div className="meetings-list full-list">
-                                    <MeetingList meetings={data.meetings} variant="full" activeTab={meetingTab} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-
-            case 'events':
-                return (
-                    <div className="dashboard-grid section-content" id="section-events">
-                        <div className="section-header-bar">
-                            <h2>Organizational Events</h2>
-                        </div>
-                        <div className="events-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                            {data.events.length === 0 ? (
-                                <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-                                    <i className="fa-regular fa-calendar-star" />
-                                    <p>No upcoming events</p>
-                                </div>
-                            ) : (
-                                data.events.map(event => (
-                                    <div key={event.id} className="event-card card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                        <div className="event-info">
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                                                <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>{event.title}</h4>
-                                                <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)', borderRadius: '20px', fontWeight: 'bold' }}>{event.type}</span>
-                                            </div>
-                                            <p style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{event.description}</p>
-                                            <div className="event-meta" style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                <span><i className="fa-regular fa-clock" style={{ width: '16px', color: 'var(--primary-color)' }}></i> {new Date(event.date).toLocaleString()}</span>
-                                                <span><i className="fa-solid fa-location-dot" style={{ width: '16px', color: 'var(--primary-color)' }}></i> {event.location || 'TBA'}</span>
-                                            </div>
-                                        </div>
-                                        <button
-                                            className={event.isJoined ? 'btn-secondary' : 'btn-primary'}
-                                            style={{
-                                                marginTop: 'auto',
-                                                width: '100%',
-                                                backgroundColor: event.isJoined ? 'rgba(34, 197, 94, 0.1)' : undefined,
-                                                color: event.isJoined ? '#4ade80' : undefined,
-                                                borderColor: event.isJoined ? 'rgba(34, 197, 94, 0.2)' : undefined,
-                                                cursor: event.isJoined ? 'default' : 'pointer'
-                                            }}
-                                            onClick={() => {
-                                                if (!event.isJoined) setSelectedEventToJoin(event)
-                                            }}
-                                            disabled={event.isJoined}
-                                        >
-                                            {event.isJoined ? (
-                                                <><i className="fa-solid fa-check mr-2"></i> Joined</>
-                                            ) : (
-                                                <><i className="fa-solid fa-user-plus mr-2"></i> Join Event</>
-                                            )}
-                                        </button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                )
-
-            case 'collisions':
-                return (
-                    <div className="dashboard-grid section-content" id="section-collisions">
-                        <div className="section-header-bar"><h2>Collision Alerts</h2></div>
-                        <div className="card">
-                            <div className="card-body"><div className="collision-list"><CollisionList collisions={data.collisions} /></div></div>
-                        </div>
-                    </div>
-                )
-
-            case 'certificates':
-                return (
-                    <div className="dashboard-grid section-content" id="section-certificates">
-                        <div className="section-header-bar"><h2>Certificates</h2></div>
-                        <div className="card-grid">
-                            <CertificateGrid certificates={data.certificates} />
-                        </div>
-                    </div>
-                )
-
-            case 'posters':
-                return (
-                    <div className="dashboard-grid section-content" id="section-posters">
-                        <div className="section-header-bar"><h2>Event Posters</h2></div>
-                        <div className="card-grid">
-                            <PosterGrid posters={data.posters} />
-                        </div>
-                    </div>
-                )
-
-            case 'reports':
-                return (
-                    <div className="dashboard-grid section-content" id="section-reports">
-                        <div className="section-header-bar"><h2>Reports</h2></div>
-                        <div className="card">
-                            <div className="card-body"><div className="reports-list"><ReportList reports={data.reports} /></div></div>
-                        </div>
-                    </div>
-                )
-
-            case 'settings':
-                return (
-                    <div className="dashboard-grid section-content" id="section-settings">
-                        <div className="section-header-bar"><h2>Profile & Settings</h2></div>
-                        <SettingsPanel user={user} />
-                    </div>
-                )
-
-            default:
-                return null
-        }
-    }
-
     return (
         <Fragment>
-            <BlobBackground />
-            <div className="dashboard-container">
-                <Sidebar navItems={WORKER_NAV} activeSection={activeSection} onSectionChange={setActiveSection} />
-                <main className="main-content">
-                    <TopBar title={SECTION_TITLES[activeSection]} user={user} alertCount={data.collisions.length} />
-                    {renderSection()}
-                </main>
+            <div className="w-full max-w-7xl mx-auto flex flex-col gap-8">
+                <header className="flex flex-col gap-2">
+                    <h1 className="text-4xl font-light text-slate-100 uppercase tracking-widest">Dashboard Overview</h1>
+                    <p className="text-zinc-500 font-mono text-sm uppercase">Worker Telemetry & Daily Directives</p>
+                </header>
+
+                <div className="dashboard-grid section-content" id="section-overview">
+                    <div className="grid-section stats-row">
+                        <StatCard icon="fa-video" title="Personal Meetings" value={data.stats.meetings} color="blue" />
+                        <StatCard icon="fa-calendar-check" title="Upcoming Events" value={data.stats.events} color="green" />
+                        <StatCard icon="fa-clock" title="Meeting Hours" value={data.stats.hours} color="purple" />
+                        <StatCard icon="fa-triangle-exclamation" title="Collision Alerts" value={data.stats.collisions} color="orange" />
+                    </div>
+
+                    <div className="grid-section main-panels mt-4">
+                        <div className="panel-column left">
+                            <div className="card calendar-card bg-zinc-900 border border-zinc-800 p-8">
+                                <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6 border-b border-zinc-800 pb-4">Calendar Overview</h2>
+                                <Calendar meetings={data.meetings} events={data.events} onDayClick={handleDayClick} />
+                            </div>
+
+                            <div className="card upcoming-card bg-zinc-900 border border-zinc-800 p-8 mt-8">
+                                <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6 border-b border-zinc-800 pb-4">Upcoming Meetings</h2>
+                                <MeetingList meetings={data.meetings} variant="preview" />
+                            </div>
+                        </div>
+
+                        <div className="panel-column right flex flex-col gap-8">
+                            <div className="card collision-card bg-zinc-900 border border-zinc-800 p-8">
+                                <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6 border-b border-zinc-800 pb-4">Collision Alerts</h2>
+                                <CollisionList collisions={data.collisions} />
+                            </div>
+
+                            <div className="card automation-card bg-zinc-900 border border-zinc-800 p-8">
+                                <h2 className="text-lg font-bold text-white tracking-widest uppercase mb-6 border-b border-zinc-800 pb-4">Recent Certificates</h2>
+                                <CertPreview />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            {showEventModal && <EventModal isOpen={showEventModal} onClose={() => setShowEventModal(false)} onCreated={fetchData} />}
-            {selectedEventToJoin && (
-                <JoinEventModal
-                    event={selectedEventToJoin}
-                    user={user}
-                    onClose={() => setSelectedEventToJoin(null)}
-                    onSuccess={(msg) => { alert(msg); setSelectedEventToJoin(null); fetchData() }}
-                />
-            )}
         </Fragment>
     )
 }

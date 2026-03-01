@@ -11,6 +11,9 @@ const eventsRoutes = require('./routes/events');
 const statsRoutes = require('./routes/stats');
 const notificationsRoutes = require('./routes/notifications'); // Import Notifications API
 const authRoutes = require('./routes/auth'); // Import Auth API
+const companyRoutes = require('./routes/company'); // Import Company API
+const invitesRoutes = require('./routes/invites'); // Import Invite API
+const networkRoutes = require('./routes/network'); // Import Network API
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +42,9 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/notifications', notificationsRoutes); // Register Notifications API
 app.use('/api/auth', authRoutes); // Refactored Auth Router
+app.use('/api/companies', companyRoutes); // Register Company API
+app.use('/api/invites', invitesRoutes); // Register Invite Router
+app.use('/api/network', networkRoutes); // Register Network Router
 
 // Error handling middleware
 app.use((err, req, res, next) => {

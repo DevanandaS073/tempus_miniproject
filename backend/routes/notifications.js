@@ -1,14 +1,15 @@
 const express = require('express');
-const router = express.Router();
+const { getUnreadNotifications, markAsRead } = require('../controllers/notificationController');
 const { authenticateToken } = require('../middleware/authMiddleware');
-const notificationsController = require('../controllers/notificationsController');
 
-// All notification routes require authentication
+const router = express.Router();
+
 router.use(authenticateToken);
 
-router.get('/', notificationsController.getNotifications);
-router.patch('/read-all', notificationsController.markAllRead);
-router.patch('/:id/read', notificationsController.markRead);
-router.delete('/', notificationsController.clearAll);
+// Fetch active/unread alerts for the logged-in user
+router.get('/', getUnreadNotifications);
+
+// Mark a specific alert as read (primarily for standard messages, Invites self-clear upon accept)
+router.patch('/:id/read', markAsRead);
 
 module.exports = router;

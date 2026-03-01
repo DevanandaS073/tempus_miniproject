@@ -1,32 +1,37 @@
 const prisma = require('../prismaClient');
 
-// Get all meetings for a user (Personal Calendar)
+// Get all meetings for a user's company (Company Calendar)
 const getMeetings = async (req, res) => {
     try {
-        const userId = req.user.id; // From JWT
+        const userId = req.user.id;
+        const companyId = req.user.company_id;
 
-        // Ensure user has a calendar
+        if (!companyId) {
+            return res.status(403).json({ error: 'User must belong to a workspace to access the calendar.' });
+        }
+
+        // Ensure user has a personal calendar instance inside the company
         let calendar = await prisma.calendars.findUnique({
             where: { user_id: userId }
         });
 
         if (!calendar) {
-            calendar = await prisma.calendars.create({ data: { user_id: userId } });
+            calendar = await prisma.calendars.create({ data: { user_id: userId, company_id: companyId } });
         }
 
+        // Fetch all meetings for this company
         const meetings = await prisma.meetings.findMany({
             where: {
-                calendar_id: calendar.calendar_id,
-                NOT: { title: { startsWith: '[Event]' } }
+                company_id: companyId
             },
-            include: { participants: true },
+            include: { participants: true, creator: { select: { first_name: true, last_name: true } } },
             orderBy: { start_time: 'asc' }
         });
 
         res.json(meetings);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch meetings' });
+        console.error("GET Meetings Error:", error);
+        res.status(500).json({ error: 'Failed to fetch meetings', details: error.message });
     }
 };
 
@@ -34,18 +39,22 @@ const getMeetings = async (req, res) => {
 const createMeeting = async (req, res) => {
     try {
         const { title, start_time, end_time } = req.body;
-        const userId = req.user.id; // From JWT
+        const userId = req.user.id;
+        const companyId = req.user.company_id;
+
+        if (!companyId) return res.status(403).json({ error: 'User must belong to a workspace.' });
+
         const startDt = new Date(start_time);
         const endDt = new Date(end_time);
 
         // 1. Get User's Calendar
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
-        if (!calendar) calendar = await prisma.calendars.create({ data: { user_id: userId } });
+        if (!calendar) calendar = await prisma.calendars.create({ data: { user_id: userId, company_id: companyId } });
 
-        // 2. Conflict Check — against other meetings in this calendar
+        // 2. Conflict Check — against other meetings in this company
         const meetingConflict = await prisma.meetings.findFirst({
             where: {
-                calendar_id: calendar.calendar_id,
+                company_id: companyId,
                 start_time: { lt: endDt },
                 end_time: { gt: startDt }
             }
@@ -58,10 +67,10 @@ const createMeeting = async (req, res) => {
             });
         }
 
-        // 3. Conflict Check — against events the user created
+        // 3. Conflict Check — against events in this company
         const eventConflict = await prisma.events.findFirst({
             where: {
-                created_by: userId,
+                company_id: companyId,
                 start_date: { lt: endDt },
                 end_date: { gt: startDt }
             }
@@ -77,6 +86,7 @@ const createMeeting = async (req, res) => {
         // 4. Create Meeting
         const meeting = await prisma.meetings.create({
             data: {
+                company_id: companyId,
                 calendar_id: calendar.calendar_id,
                 title,
                 start_time: startDt,
@@ -88,8 +98,8 @@ const createMeeting = async (req, res) => {
 
         res.status(201).json(meeting);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create meeting' });
+        console.error("POST Meetings Error:", error);
+        res.status(500).json({ error: 'Failed to create meeting', details: error.message });
     }
 };
 

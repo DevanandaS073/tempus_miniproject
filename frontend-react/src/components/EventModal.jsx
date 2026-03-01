@@ -117,7 +117,7 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
                         </div>
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-4">
+                            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-none px-4 py-2 mb-4">
                                 {error}
                             </div>
                         )}
@@ -126,28 +126,28 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
                             <div>
                                 <label className="text-zinc-400 text-xs block mb-1">Title</label>
                                 <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                                    className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
                                     placeholder="Event title" />
                             </div>
                             <div>
                                 <label className="text-zinc-400 text-xs block mb-1">Description</label>
                                 <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
                                     rows={2}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors resize-none"
+                                    className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors resize-none"
                                     placeholder="Event description" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-zinc-400 text-xs block mb-1">Type</label>
                                     <select value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors">
+                                        className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors">
                                         {EVENT_TYPES.map(t => <option key={t} value={t} className="bg-zinc-800">{t}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="text-zinc-400 text-xs block mb-1">Location</label>
                                     <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                                        className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
                                         placeholder="Location" />
                                 </div>
                             </div>
@@ -156,17 +156,17 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
                                     <label className="text-zinc-400 text-xs block mb-1">Start</label>
                                     <input type="datetime-local" value={form.start_date}
                                         onChange={e => handleStartChange(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors" />
+                                        className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors" />
                                 </div>
                                 <div>
                                     <label className="text-zinc-400 text-xs block mb-1">End</label>
                                     <input type="datetime-local" value={form.end_date}
                                         onChange={e => setForm({ ...form, end_date: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors" />
+                                        className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors" />
                                 </div>
                             </div>
                             <button type="submit" disabled={loading}
-                                className="w-full bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50">
+                                className="w-full bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-none font-medium transition-colors disabled:opacity-50">
                                 {loading ? 'Creating...' : 'Create Event'}
                             </button>
                         </form>
@@ -175,7 +175,7 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
 
                 {step === 'success' && (
                     <div className="text-center py-4">
-                        <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div className="w-16 h-16 bg-green-500/20 rounded-none flex items-center justify-center mx-auto mb-4">
                             <i className="fas fa-check text-green-400 text-2xl" />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-1">Event Created!</h3>
@@ -192,13 +192,13 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
                                     })
                                     navigate(`/poster-gen?${params.toString()}`)
                                 }}
-                                className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-none text-sm font-medium transition-colors"
                             >
                                 <i className="fas fa-image mr-2" />Create Poster
                             </button>
                             <button
                                 onClick={() => alert('Certificate generation coming soon!')}
-                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-none text-sm font-medium transition-colors"
                             >
                                 <i className="fas fa-certificate mr-2" />Generate Certificate
                             </button>
