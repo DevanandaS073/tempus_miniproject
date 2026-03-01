@@ -6,50 +6,106 @@ datasource db {
   provider = "postgresql"
 }
 
-// --- User & Role Management (Placeholder for Team B) ---
-enum Role {
-  admin
-  manager
-  user
+// --- Multi-Tenancy Core ---
+model companies {
+  id         String   @id @default(uuid())
+  name       String   @db.VarChar(255)
+  subdomain  String   @unique @db.VarChar(100)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  company_codes company_codes[]
+  roles         roles[]
+  users         users[]
+  events        events[]
+  calendars     calendars[]
+  meetings      meetings[]
 }
+
+model company_codes {
+  id         String   @id @default(uuid())
+  company_id String
+  code       String   @unique @db.VarChar(50)
+  is_active  Boolean  @default(true)
+
+  company    companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+}
+
+// --- Dynamic RBAC Engine ---
+model features {
+  id   String @id @default(uuid())
+  code String @unique @db.VarChar(50)
+  name String @db.VarChar(100)
+
+  role_features role_features[]
+}
+
+model roles {
+  id         String   @id @default(uuid())
+  company_id String
+  name       String   @db.VarChar(100)
+
+  company    companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  users      users[]
+  role_features role_features[]
+}
+
+model role_features {
+  role_id    String
+  feature_id String
+
+  role       roles    @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  feature    features @relation(fields: [feature_id], references: [id], onDelete: Cascade)
+
+  @@id([role_id, feature_id])
+}
+
+// --- Entities (Isolated by company_id) ---
 
 model users {
   id            Int      @id @default(autoincrement())
-  name          String   @db.VarChar(100)
+  company_id    String?
+  role_id       String?
   email         String   @unique @db.VarChar(255)
   password_hash String
-  role          Role     @default(user)
-  department_id Int?     // For organizational events
+  first_name    String   @db.VarChar(100)
+  last_name     String   @db.VarChar(100)
   created_at    DateTime @default(now()) @db.Timestamp(6)
-  
+
+  company       companies? @relation(fields: [company_id], references: [id], onDelete: SetNull)
+  role          roles?     @relation(fields: [role_id], references: [id], onDelete: SetNull)
+
   calendar      calendars?
-  meetings_created meetings[] @relation("meeting_creator")
-  events_created   events[]   @relation("event_creator")
+  meetings_created       meetings[]             @relation("meeting_creator")
+  events_created         events[]               @relation("event_creator")
   meeting_participations meeting_participants[]
   event_participations   event_participants[]
-  notifications  notifications[]
+  notifications          notifications[]
 }
 
-// --- Calendar & Meeting Management (Team A) ---
 model calendars {
   calendar_id Int     @id @default(autoincrement())
+  company_id  String
   user_id     Int     @unique
-  user        users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  company     companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  user        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   
   meetings    meetings[]
 }
 
 model meetings {
   meeting_id   Int      @id @default(autoincrement())
+  company_id   String
   calendar_id  Int
   title        String   @db.VarChar(255)
   description  String?  @db.Text
   start_time   DateTime @db.Timestamp(6)
   end_time     DateTime @db.Timestamp(6)
   created_by   Int
-  status       String   @default("scheduled") @db.VarChar(50) // scheduled, cancelled, completed
+  status       String   @default("scheduled") @db.VarChar(50)
   created_at   DateTime @default(now()) @db.Timestamp(6)
 
+  company      companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
   calendar     calendars @relation(fields: [calendar_id], references: [calendar_id], onDelete: Cascade)
   creator      users     @relation("meeting_creator", fields: [created_by], references: [id])
   participants meeting_participants[]
@@ -59,7 +115,7 @@ model meeting_participants {
   id           Int      @id @default(autoincrement())
   meeting_id   Int
   user_id      Int
-  status       String   @default("pending") @db.VarChar(50) // pending, accepted, declined
+  status       String   @default("pending") @db.VarChar(50)
 
   meeting      meetings @relation(fields: [meeting_id], references: [meeting_id], onDelete: Cascade)
   user         users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -67,10 +123,9 @@ model meeting_participants {
   @@unique([meeting_id, user_id])
 }
 
-// --- Event Management (Team A - Organizational) ---
 model events {
   event_id      Int      @id @default(autoincrement())
-  department_id Int?     
+  company_id    String
   title         String   @db.VarChar(255)
   description   String?  @db.Text
   event_type    String   @db.VarChar(100)
@@ -80,10 +135,10 @@ model events {
   created_by    Int
   created_at    DateTime @default(now()) @db.Timestamp(6)
 
-  creator       users    @relation("event_creator", fields: [created_by], references: [id])
+  company       companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  creator       users     @relation("event_creator", fields: [created_by], references: [id])
   participants  event_participants[]
   
-  // Relations for other teams
   generated_posters generated_posters[]
 }
 
@@ -113,6 +168,12 @@ model poster_templates {
   @@index([is_active])
 }
 
+enum Status {
+  pending
+  completed
+  failed
+}
+
 model generated_posters {
   id           Int               @id @default(autoincrement())
   event_id     Int
@@ -130,21 +191,15 @@ model generated_posters {
   @@index([generated_at])
 }
 
-enum Status {
-  pending
-  completed
-  failed
-}
-
-// --- Notification System ---
 model notifications {
   id         Int      @id @default(autoincrement())
   user_id    Int
-  type       String   @db.VarChar(50)    // event_created | meeting_invite | system
+  type       String   @db.VarChar(50)
   title      String   @db.VarChar(255)
   message    String   @db.Text
   link       String?  @db.VarChar(500)
   is_read    Boolean  @default(false)
+  expires_at DateTime? @db.Timestamp(6)
   created_at DateTime @default(now()) @db.Timestamp(6)
 
   user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)

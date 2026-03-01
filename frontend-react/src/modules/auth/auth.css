@@ -114,12 +114,7 @@
 }
 
 .mascot-body {
-    width: 60px;
-    height: 40px;
-    background: #cbd5e1;
-    border-radius: 10px 10px 0 0;
-    margin-top: -5px;
-    z-index: -1;
+    display: none;
 }
 
 /* Animations and States */
@@ -149,19 +144,19 @@
 }
 
 .mascot.cover-eyes .mascot-hand {
-    top: 26px;
+    top: 24px;
     background: #94a3b8;
     transform: scale(1.2);
     opacity: 1;
 }
 
 .mascot.cover-eyes .mascot-hand.left {
-    left: 42px;
+    left: 41px;
     /* User explicit tweak */
 }
 
 .mascot.cover-eyes .mascot-hand.right {
-    right: 38px;
+    right: 41px;
 }
 
 .mascot.close-eyes .eye {
@@ -182,72 +177,58 @@
 }
 
 .mascot.waving .mascot-hand.right {
-    animation: waveHand 2s;
+    animation: waveHand 1s;
     transform-origin: bottom left;
 }
 
 @keyframes waveHand {
     0% {
         opacity: 1;
-        top: 110px;
-        right: 20px;
-        transform: rotate(0deg);
+        top: 30px;
+        right: -30px;
+        transform: rotate(45deg);
     }
 
     25% {
-        top: 30px;
-        right: -30px;
-        transform: rotate(45deg);
-    }
-
-    35% {
         top: -10px;
         right: -10px;
         transform: rotate(0deg);
     }
 
-    45% {
+    50% {
         top: 30px;
         right: -30px;
         transform: rotate(45deg);
-    }
-
-    55% {
-        top: -10px;
-        right: -10px;
-        transform: rotate(0deg);
     }
 
     75% {
-        top: 30px;
-        right: -25px;
-        transform: rotate(45deg);
+        top: -10px;
+        right: -10px;
+        transform: rotate(0deg);
     }
 
     100% {
         opacity: 1;
-        top: 110px;
-        right: 20px;
-        transform: rotate(0deg);
+        top: 30px;
+        right: -25px;
+        transform: rotate(45deg);
     }
 }
 
 .mascot.waving .mascot-head {
-    animation: headBob 2s ease-in-out;
+    animation: headBob 1s ease-in-out;
 }
 
 @keyframes headBob {
 
     0%,
-    25%,
-    45%,
-    75%,
+    50%,
     100% {
         transform: rotate(0deg);
     }
 
-    35%,
-    55% {
+    25%,
+    75% {
         transform: rotate(-10deg);
     }
 }

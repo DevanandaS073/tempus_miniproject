@@ -20,12 +20,16 @@ export default function Chronos({ activeInput, passwordVisible, loginFailed, vie
         setAnimState('waving')
         setTimeout(() => {
             setAnimState(prev => prev.includes('waving') ? '' : prev)
-        }, 2000)
+        }, 1000)
     }
 
     // Eye tracking logic
     useEffect(() => {
-        if (animState.includes('waving') || passwordVisible) return
+        if (animState.includes('waving') || passwordVisible) {
+            if (eyeLeftRef.current) eyeLeftRef.current.style.transform = `translate(0px, 0px)`
+            if (eyeRightRef.current) eyeRightRef.current.style.transform = `translate(0px, 0px)`
+            return
+        }
 
         if (activeInput) {
             const focusedEl = document.getElementById(activeInput === 'password' ? 'login-password' : activeInput)

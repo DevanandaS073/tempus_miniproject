@@ -4,7 +4,18 @@ const jwt = require('jsonwebtoken');
 exports.login = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const user = await prisma.users.findUnique({ where: { email } });
+        const user = await prisma.users.findUnique({
+            where: { email },
+            include: {
+                role: {
+                    include: {
+                        role_features: {
+                            include: { feature: true }
+                        }
+                    }
+                }
+            }
+        });
 
         if (!user) {
             return res.status(401).json({ error: 'User not found' });
@@ -14,15 +25,32 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        // Map the complicated role_features graph into a simple array of permission strings
+        const permissions = (user.role && user.role.role_features)
+            ? user.role.role_features.map(rf => rf.feature.code)
+            : [];
+
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
+            {
+                id: user.id,
+                email: user.email,
+                company_id: user.company_id,
+                permissions // Store the array of strings directly in the JWT
+            },
             process.env.JWT_SECRET || 'tempus-secret-key',
-            { expiresIn: '1h' }
+            { expiresIn: '12h' }
         );
 
         res.json({
             token,
-            user: { id: user.id, email: user.email, name: user.name, role: user.role }
+            user: {
+                id: user.id,
+                email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                company_id: user.company_id,
+                permissions
+            }
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -31,18 +59,24 @@ exports.login = async (req, res) => {
 };
 
 exports.signup = async (req, res) => {
-    const { email, password, name, role } = req.body;
-    const dbRole = (role && role.toUpperCase() === 'ADMIN') ? 'admin' : 'user';
+    const { email, password, name } = req.body;
+
+    const parts = (name || '').trim().split(' ');
+    const first_name = parts[0] || '';
+    const last_name = parts.slice(1).join(' ') || '';
+
     try {
         const user = await prisma.users.create({
             data: {
                 email,
-                name,
+                first_name,
+                last_name,
                 password_hash: password,
-                role: dbRole
+                company_id: null, // Explicitly joining as Free Agent
+                role_id: null
             }
         });
-        res.json({ message: 'User created', user });
+        res.json({ message: 'User created as Free Agent', user });
     } catch (err) {
         if (err.code === 'P2002') {
             return res.status(400).json({ error: 'Email already exists' });
@@ -78,10 +112,14 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ error: 'Name is required' });
         }
 
+        const parts = (name || '').trim().split(' ');
+        const first_name = parts[0] || '';
+        const last_name = parts.slice(1).join(' ') || '';
+
         const updatedUser = await prisma.users.update({
             where: { id: userId },
-            data: { name: name.trim() },
-            select: { id: true, name: true, email: true, role: true }
+            data: { first_name, last_name },
+            select: { id: true, first_name: true, last_name: true, email: true, company_id: true }
         });
 
         res.json({ message: 'Profile updated successfully', user: updatedUser });

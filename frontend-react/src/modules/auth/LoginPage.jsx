@@ -5,10 +5,6 @@ import Chronos from './Chronos'
 import BlobBackground from '../../components/BlobBackground'
 import './auth.css'
 
-/**
- * InputGroup — Extracted OUTSIDE LoginPage to prevent unmount/remount on every render.
- * This fixes the focus-loss bug (issue #1).
- */
 function InputGroup({ label, type = 'text', value, onChange, onFocus, onBlur, id, onPasswordToggle }) {
     const isPassword = type === 'password'
     const [showPw, setShowPw] = useState(false)
@@ -24,15 +20,15 @@ function InputGroup({ label, type = 'text', value, onChange, onFocus, onBlur, id
                 onFocus={onFocus}
                 onBlur={onBlur}
                 placeholder=" "
-                className="peer w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-zinc-400 transition-colors placeholder-transparent shadow-sm"
+                className="peer w-full bg-white/5 border border-white/10 rounded-none px-4 py-3 text-white text-sm outline-none focus:border-zinc-400 focus:bg-white/10 transition-all placeholder-transparent shadow-none"
                 autoComplete={isPassword ? 'off' : undefined}
             />
             <label
                 htmlFor={id}
-                className="absolute left-4 top-2.5 text-zinc-500 text-sm transition-all duration-200
-          peer-focus:top-[-8px] peer-focus:text-xs peer-focus:text-zinc-300 peer-focus:bg-zinc-900 peer-focus:px-1
-          peer-[:not(:placeholder-shown)]:top-[-8px] peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-zinc-400 peer-[:not(:placeholder-shown)]:bg-zinc-900 peer-[:not(:placeholder-shown)]:px-1
-          pointer-events-none"
+                className="absolute left-4 top-3 text-zinc-500 text-sm transition-all duration-200
+          peer-focus:top-[-8px] peer-focus:text-xs peer-focus:text-white peer-focus:bg-zinc-950 peer-focus:px-2
+          peer-[:not(:placeholder-shown)]:top-[-8px] peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-white peer-[:not(:placeholder-shown)]:bg-zinc-950 peer-[:not(:placeholder-shown)]:px-2
+          pointer-events-none tracking-widest uppercase"
             >
                 {label}
             </label>
@@ -44,7 +40,7 @@ function InputGroup({ label, type = 'text', value, onChange, onFocus, onBlur, id
                         setShowPw(nextShow)
                         onPasswordToggle?.(nextShow)
                     }}
-                    className="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-300 transition-colors"
+                    className="absolute right-4 top-3 text-zinc-500 hover:text-white transition-colors"
                 >
                     <i className={`fas ${showPw ? 'fa-eye-slash' : 'fa-eye'}`} />
                 </button>
@@ -57,8 +53,7 @@ export default function LoginPage() {
     const navigate = useNavigate()
     const { login, signup, forgotPassword, isAuthenticated, user } = useAuth()
 
-    const [view, setView] = useState('role') // role | login | signup | forgot
-    const [selectedRole, setSelectedRole] = useState(localStorage.getItem('selectedRole') || '')
+    const [view, setView] = useState('login') // login | signup | forgot
     const [activeInput, setActiveInput] = useState(null)
     const [passwordVisible, setPasswordVisible] = useState(false)
     const [loginFailed, setLoginFailed] = useState(false)
@@ -70,19 +65,6 @@ export default function LoginPage() {
     const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
     const [forgotEmail, setForgotEmail] = useState('')
 
-    // Redirect if already logged in
-    useEffect(() => {
-        if (isAuthenticated && user) {
-            navigate(user.role === 'admin' ? '/dashboard' : '/worker-dashboard', { replace: true })
-        }
-    }, [isAuthenticated, user, navigate])
-
-    const handleRoleSelect = (role) => {
-        setSelectedRole(role)
-        localStorage.setItem('selectedRole', role)
-        setView('login')
-    }
-
     const handleLogin = async (e) => {
         e.preventDefault()
         setError('')
@@ -90,7 +72,7 @@ export default function LoginPage() {
         setLoginFailed(false)
         try {
             const u = await login(loginForm.email, loginForm.password)
-            navigate(u.role === 'admin' ? '/dashboard' : '/worker-dashboard', { replace: true })
+            navigate(u.company_id ? '/dashboard' : '/limbo', { replace: true })
         } catch (err) {
             setError(err.message)
             setLoginFailed(true)
@@ -109,10 +91,10 @@ export default function LoginPage() {
         }
         setLoading(true)
         try {
-            await signup(signupForm.name, signupForm.email, signupForm.password, selectedRole || 'user')
-            alert('Account created successfully! Please login.')
-            setView('login')
-            setSignupForm({ name: '', email: '', password: '', confirmPassword: '' })
+            await signup(signupForm.name, signupForm.email, signupForm.password)
+            // Auto-login immediately after successful signup
+            const u = await login(signupForm.email, signupForm.password)
+            navigate(u.company_id ? '/dashboard' : '/limbo', { replace: true })
         } catch (err) {
             setError(err.message)
         } finally {
@@ -148,62 +130,32 @@ export default function LoginPage() {
     const handleInputBlur = () => setActiveInput(null)
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-zinc-950 font-sans">
             <BlobBackground />
 
-            {/* Card — spacious with generous padding */}
-            <div className="login-card-enter glass-card w-full max-w-[400px] min-h-[360px] p-5 sm:p-8 relative mx-4 overflow-visible flex flex-col justify-center shadow-2xl">
-                {/* Chronos sits on top — z-index BEHIND card content */}
+            {/* Brutalist Card */}
+            <div className="login-card-enter bg-zinc-950/80 backdrop-blur-xl border border-zinc-800 w-full max-w-[420px] min-h-[400px] p-8 sm:p-10 relative mx-4 flex flex-col justify-center rounded-none shadow-[0_0_50px_rgba(0,0,0,0.5)] z-10">
                 <Chronos activeInput={activeInput} passwordVisible={passwordVisible} loginFailed={loginFailed} viewState={view} />
-
-                {/* ─── Role Selection ─── */}
-                {view === 'role' && (
-                    <div className="view-enter text-center">
-                        <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Welcome to Tempus</h2>
-                        <p className="text-zinc-400 text-sm mb-4">Select your role to continue</p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => handleRoleSelect('admin')}
-                                className="flex-1 glass-card p-3 text-center cursor-pointer group hover:border-zinc-500 transition-all duration-300 relative overflow-hidden"
-                            >
-                                <span className="btn-shine" />
-                                <i className="fas fa-shield-halved text-3xl text-zinc-300 mb-3 block group-hover:text-white transition-colors" />
-                                <span className="text-white font-semibold block">Admin</span>
-                                <span className="text-zinc-500 text-xs">Manage events & teams</span>
-                            </button>
-                            <button
-                                onClick={() => handleRoleSelect('user')}
-                                className="flex-1 glass-card p-3 text-center cursor-pointer group hover:border-zinc-500 transition-all duration-300 relative overflow-hidden"
-                            >
-                                <span className="btn-shine" />
-                                <i className="fas fa-user text-3xl text-zinc-300 mb-3 block group-hover:text-white transition-colors" />
-                                <span className="text-white font-semibold block">Worker</span>
-                                <span className="text-zinc-500 text-xs">View schedule & events</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {/* ─── Login ─── */}
                 {view === 'login' && (
                     <div className="view-enter">
-                        <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Welcome back</h2>
-                        <p className="text-zinc-400 text-sm mb-4">
-                            Sign in as <span className="capitalize text-zinc-300 font-medium">{selectedRole || 'user'}</span>
-                        </p>
+                        <h2 className="text-3xl font-light text-white mb-2 tracking-[0.1em] uppercase">Authenticate</h2>
+                        <p className="text-zinc-500 text-sm mb-8 tracking-widest uppercase">Identity Verification</p>
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-3">
+                            <div className="bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-none px-4 py-3 mb-6 uppercase tracking-wider font-bold">
                                 {error}
                             </div>
                         )}
 
-                        <form className="flex flex-col gap-3" onSubmit={handleLogin}>
-                            <InputGroup label="Email" type="email" id="login-email" value={loginForm.email}
+                        <form className="flex flex-col gap-6" onSubmit={handleLogin}>
+                            <InputGroup label="Email Address" type="email" id="login-email" value={loginForm.email}
                                 onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                                 onFocus={() => handleInputFocus('login-email')}
                                 onBlur={handleInputBlur} />
-                            <InputGroup label="Password" type="password" id="login-password" value={loginForm.password}
+
+                            <InputGroup label="Access Token" type="password" id="login-password" value={loginForm.password}
                                 onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                                 onFocus={() => handleInputFocus('password')}
                                 onBlur={handleInputBlur}
@@ -212,25 +164,19 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-zinc-100 hover:bg-white text-zinc-900 py-2.5 rounded-xl font-semibold
-                  transition-all duration-300 relative overflow-hidden disabled:opacity-50 shadow-md hover:shadow-lg mt-2"
+                                className="w-full bg-white hover:bg-zinc-200 text-black py-4 rounded-none font-bold uppercase tracking-[0.2em]
+                  transition-all duration-300 disabled:opacity-50 mt-4 shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]"
                             >
-                                <span className="btn-shine" />
-                                {loading ? 'Signing in...' : 'Sign In'}
+                                {loading ? 'Processing...' : 'Enter System'}
                             </button>
                         </form>
 
-                        <div className="flex justify-between mt-4 text-sm">
-                            <button onClick={() => switchView('forgot')} className="text-zinc-400 hover:text-white transition-colors">
-                                Forgot password?
+                        <div className="flex justify-between mt-8 text-xs font-bold tracking-widest uppercase">
+                            <button onClick={() => switchView('forgot')} className="text-zinc-500 hover:text-white transition-colors">
+                                Reset Key
                             </button>
-                            <button onClick={() => switchView('signup')} className="text-zinc-400 hover:text-white transition-colors">
-                                Create account
-                            </button>
-                        </div>
-                        <div className="text-center mt-3">
-                            <button onClick={() => switchView('role')} className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors">
-                                ← Change role
+                            <button onClick={() => switchView('signup')} className="text-zinc-500 hover:text-white transition-colors">
+                                Initialize Agent
                             </button>
                         </div>
                     </div>
@@ -239,32 +185,30 @@ export default function LoginPage() {
                 {/* ─── Signup ─── */}
                 {view === 'signup' && (
                     <div className="view-enter">
-                        <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Create account</h2>
-                        <p className="text-zinc-400 text-sm mb-4">
-                            Signing up as <span className="capitalize text-zinc-300 font-medium">{selectedRole || 'user'}</span>
-                        </p>
+                        <h2 className="text-3xl font-light text-white mb-2 tracking-[0.1em] uppercase">Initialize</h2>
+                        <p className="text-zinc-500 text-sm mb-8 tracking-widest uppercase">Register New Agent</p>
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-3">
+                            <div className="bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-none px-4 py-3 mb-6 uppercase tracking-wider font-bold">
                                 {error}
                             </div>
                         )}
 
-                        <form className="flex flex-col gap-2" onSubmit={handleSignup}>
+                        <form className="flex flex-col gap-5" onSubmit={handleSignup}>
                             <InputGroup label="Full Name" id="signup-name" value={signupForm.name}
                                 onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
                                 onFocus={() => handleInputFocus('signup-name')}
                                 onBlur={handleInputBlur} />
-                            <InputGroup label="Email" type="email" id="signup-email" value={signupForm.email}
+                            <InputGroup label="Email Address" type="email" id="signup-email" value={signupForm.email}
                                 onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
                                 onFocus={() => handleInputFocus('signup-email')}
                                 onBlur={handleInputBlur} />
-                            <InputGroup label="Password" type="password" id="signup-password" value={signupForm.password}
+                            <InputGroup label="Master Key" type="password" id="signup-password" value={signupForm.password}
                                 onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
                                 onFocus={() => handleInputFocus('password')}
                                 onBlur={handleInputBlur}
                                 onPasswordToggle={(visible) => setPasswordVisible(visible)} />
-                            <InputGroup label="Confirm Password" type="password" id="signup-confirm" value={signupForm.confirmPassword}
+                            <InputGroup label="Verify Key" type="password" id="signup-confirm" value={signupForm.confirmPassword}
                                 onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
                                 onFocus={() => handleInputFocus('password')}
                                 onBlur={handleInputBlur}
@@ -273,17 +217,16 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-zinc-100 hover:bg-white text-zinc-900 py-2.5 rounded-xl font-semibold
-                  transition-all duration-300 relative overflow-hidden disabled:opacity-50 shadow-md hover:shadow-lg mt-2"
+                                className="w-full bg-white hover:bg-zinc-200 text-black py-4 rounded-none font-bold uppercase tracking-[0.2em]
+                  transition-all duration-300 disabled:opacity-50 mt-4 shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]"
                             >
-                                <span className="btn-shine" />
-                                {loading ? 'Creating...' : 'Create Account'}
+                                {loading ? 'Processing...' : 'Confirm'}
                             </button>
                         </form>
 
-                        <div className="text-center mt-4">
-                            <button onClick={() => switchView('login')} className="text-zinc-400 hover:text-white text-sm transition-colors">
-                                Already have an account? Sign in
+                        <div className="text-center mt-6 text-xs font-bold tracking-widest uppercase">
+                            <button onClick={() => switchView('login')} className="text-zinc-500 hover:text-white transition-colors">
+                                ← Return to Gateway
                             </button>
                         </div>
                     </div>
@@ -292,17 +235,17 @@ export default function LoginPage() {
                 {/* ─── Forgot Password ─── */}
                 {view === 'forgot' && (
                     <div className="view-enter">
-                        <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Reset password</h2>
-                        <p className="text-zinc-400 text-sm mb-4">Enter your email to receive reset instructions</p>
+                        <h2 className="text-3xl font-light text-white mb-2 tracking-[0.1em] uppercase">Override</h2>
+                        <p className="text-zinc-500 text-sm mb-8 tracking-widest uppercase">Request Key Reset</p>
 
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-3">
+                            <div className="bg-red-500/10 border border-red-500 text-red-400 text-sm rounded-none px-4 py-3 mb-6 uppercase tracking-wider font-bold">
                                 {error}
                             </div>
                         )}
 
-                        <form className="flex flex-col gap-3" onSubmit={handleForgot}>
-                            <InputGroup label="Email" type="email" id="forgot-email" value={forgotEmail}
+                        <form className="flex flex-col gap-6" onSubmit={handleForgot}>
+                            <InputGroup label="Email Address" type="email" id="forgot-email" value={forgotEmail}
                                 onChange={(e) => setForgotEmail(e.target.value)}
                                 onFocus={() => handleInputFocus('forgot-email')}
                                 onBlur={handleInputBlur} />
@@ -310,17 +253,16 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-zinc-100 hover:bg-white text-zinc-900 py-2.5 rounded-xl font-semibold
-                  transition-all duration-300 relative overflow-hidden disabled:opacity-50 shadow-md hover:shadow-lg mt-2"
+                                className="w-full bg-white hover:bg-zinc-200 text-black py-4 rounded-none font-bold uppercase tracking-[0.2em]
+                  transition-all duration-300 disabled:opacity-50 mt-4 shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]"
                             >
-                                <span className="btn-shine" />
-                                {loading ? 'Sending...' : 'Send Reset Link'}
+                                {loading ? 'Processing...' : 'Transmit Override'}
                             </button>
                         </form>
 
-                        <div className="text-center mt-4">
-                            <button onClick={() => switchView('login')} className="text-zinc-400 hover:text-white text-sm transition-colors">
-                                ← Back to login
+                        <div className="text-center mt-8 text-xs font-bold tracking-widest uppercase">
+                            <button onClick={() => switchView('login')} className="text-zinc-500 hover:text-white transition-colors">
+                                ← Abort Protocol
                             </button>
                         </div>
                     </div>

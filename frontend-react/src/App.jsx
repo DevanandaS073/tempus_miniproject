@@ -6,11 +6,13 @@ import WorkerDashboard from './modules/worker/WorkerDashboard'
 import CalendarPage from './modules/calendar/CalendarPage'
 import PosterGenPage from './modules/poster/PosterGenPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import FreeAgentPage from './modules/onboarding/FreeAgentPage'
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
+      <Route path="/limbo" element={<FreeAgentPage />} />
 
       {/* Admin routes */}
       <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

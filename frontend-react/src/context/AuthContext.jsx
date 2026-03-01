@@ -37,11 +37,11 @@ export function AuthProvider({ children }) {
         return data.user
     }
 
-    const signup = async (name, email, password, role) => {
+    const signup = async (name, email, password) => {
         const res = await fetch('/api/auth/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password, role }),
+            body: JSON.stringify({ name, email, password }),
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Signup failed')
@@ -62,7 +62,6 @@ export function AuthProvider({ children }) {
     const logout = () => {
         localStorage.removeItem('tempus_token')
         localStorage.removeItem('tempus_user')
-        localStorage.removeItem('selectedRole')
         setToken(null)
         setUser(null)
     }
