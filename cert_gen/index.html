@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CertiGen - AI Powered Certificate Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Background Elements for Glassmorphism -->
+    <div class="bg-shape circle-1"></div>
+    <div class="bg-shape circle-2"></div>
+
+    <nav class="navbar glass">
+        <div class="logo">
+            <i class="fa-solid fa-certificate"></i> CertiGen AI
+        </div>
+        <div class="nav-links">
+            <button id="btn-dashboard" class="nav-btn active">Dashboard</button>
+            <button id="btn-settings" class="nav-btn"><i class="fa-solid fa-gear"></i> Settings</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Settings Modal (Hidden by default) -->
+        <div id="settings-modal" class="modal hidden glass">
+            <div class="modal-content">
+                <h2><i class="fa-solid fa-key"></i> API Configuration</h2>
+                <p>Enter your Google Gemini API Key for ML Wireframing. This stays offline in your browser.</p>
+                <input type="password" id="api-key-input" placeholder="AIzaSy...">
+                <p id="api-key-status" class="text-sm" style="margin-top: -1rem; margin-bottom: 1rem;"></p>
+                <div class="modal-actions">
+                    <button id="btn-test-key" class="btn secondary-btn full-width">Test Key</button>
+                    <button id="btn-save-settings" class="btn primary-btn full-width">Save</button>
+                    <button id="btn-close-settings" class="btn secondary-btn full-width">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view active">
+            <h1 class="fade-in">Welcome to CertiGen.</h1>
+            <p class="subtitle fade-in">Create beautiful, bulk certificates instantly with AI.</p>
+
+            <div class="cards-container">
+                <div class="card glass interactive" id="card-generator">
+                    <div class="card-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <h3>Standard Generator</h3>
+                    <p>Select a template, upload a CSV, and generate a multi-page PDF instantly.</p>
+                </div>
+
+                <div class="card glass interactive" id="card-ml-creator">
+                    <div class="card-icon"><i class="fa-solid fa-brain"></i></div>
+                    <h3>AI Template Creator</h3>
+                    <p>Upload a blank certificate. Let Gemini AI map the text fields automatically and create a custom
+                        template.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Standard Generator View -->
+        <section id="view-generator" class="view hidden">
+            <button class="btn btn-back"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</button>
+            <h2>Standard Generator</h2>
+            <div class="split-layout">
+                <div class="controls glass panel">
+                    <h3>1. Select Template</h3>
+                    <select id="template-select" class="input-field">
+                        <option value="modern_minimal" selected>Modern Minimal</option>
+                        <option value="classic_elegant">Classic Elegant</option>
+                        <option value="corporate_bold">Corporate Bold</option>
+                        <option value="custom_ml">Custom (ML Generated)</option>
+                    </select>
+
+                    <h3 class="mt-4">2. Upload CSV Data</h3>
+                    <div class="upload-area" id="csv-upload-area">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <p>Drag & Drop your CSV here or <span class="highlight">Browse</span></p>
+                        <input type="file" id="csv-file-input" accept=".csv" hidden>
+                    </div>
+
+                    <button class="btn primary-btn full-width mt-4" id="btn-generate-pdf" disabled>
+                        <i class="fa-solid fa-download"></i> Generate PDF
+                    </button>
+                </div>
+                <div class="preview glass panel">
+                    <h3>Live Preview</h3>
+                    <div id="certificate-preview" class="certificate-canvas">
+                        <p class="placeholder-text">Upload CSV to see preview</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ML Creator View (HTML/CSS Builder) -->
+        <section id="view-ml-creator" class="view hidden">
+            <button class="btn btn-back"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</button>
+            <h2>AI Template Creator</h2>
+            <div class="split-layout">
+                <div class="controls glass panel" style="flex: 1; max-height: 80vh; overflow-y: auto;">
+                    <h3>1. Upload Reference Certificate</h3>
+                    <p class="text-sm mb-2 text-gray" style="margin-bottom: 0.5rem; color: #94a3b8;">Provide an image of
+                        a certificate whose design you want to clone.</p>
+                    <div class="upload-area" id="image-upload-area" style="padding: 1rem;">
+                        <i class="fa-regular fa-image" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                        <p class="text-sm">Drag & Drop Reference Image</p>
+                        <input type="file" id="image-file-input" accept="image/png, image/jpeg" hidden>
+                    </div>
+
+                    <h3 class="mt-4">2. Upload Custom Assets (Logos, Signatures)</h3>
+                    <p class="text-sm mb-2" style="margin-bottom: 0.5rem; color: #94a3b8;">These will replace the ones
+                        in the reference design.</p>
+                    <div id="assets-list" class="mapping-container" style="margin-bottom: 1rem;">
+                        <!-- Dynamically populated assets go here -->
+                    </div>
+                    <button class="btn secondary-btn full-width" id="btn-add-asset">
+                        <i class="fa-solid fa-plus"></i> Add Logo / Asset
+                    </button>
+                    <input type="file" id="asset-file-input" accept="image/png, image/jpeg" hidden>
+
+                    <h3 class="mt-4">3. Describe Scenario</h3>
+                    <p class="text-sm mb-2" style="margin-bottom: 0.5rem; color: #94a3b8;">E.g. "Use my uploaded logo at
+                        the top. Make the theme blue. Add placeholders for name, course, date."</p>
+                    <textarea id="ai-scenario-prompt" class="input-field" style="height: 100px; resize: vertical;"
+                        placeholder="Give the AI context on how to adapt the reference design..."></textarea>
+
+                    <button class="btn primary-btn full-width mt-4" id="btn-run-ai">
+                        <i class="fa-solid fa-brain"></i> Generate HTML Template
+                    </button>
+                    <button class="btn success-btn full-width mt-2 hidden" id="btn-save-template">
+                        <i class="fa-solid fa-save"></i> Save Custom Template
+                    </button>
+                </div>
+
+                <div class="preview glass panel" style="flex: 2; display: flex; flex-direction: column;">
+                    <h3>Live Render & Code</h3>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <button class="btn secondary-btn active" id="btn-tab-preview" style="flex:1;">Preview</button>
+                        <button class="btn secondary-btn" id="btn-tab-code" style="flex:1;">HTML Code</button>
+                    </div>
+
+                    <div id="html-preview-container" class="certificate-canvas relative"
+                        style="background:#fff; flex: 1;">
+                        <p class="placeholder-text" style="color: #64748b;">Upload reference and click Generate</p>
+                    </div>
+
+                    <textarea id="html-code-editor" class="input-field hidden"
+                        style="flex: 1; font-family: monospace; resize: none; background: #1e293b; color: #a5b4fc; padding: 1rem; font-size: 0.9rem; margin-bottom: 0;"></textarea>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Libraries via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Custom Scripts -->
+    <script src="geminiApi.js"></script>
+    <script src="pdfGenerator.js"></script>
+    <script src="mlCanvas.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
