@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, Fragment } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import StatCard from '../../components/StatCard'
-import Calendar from '../../components/Calendar'
-import MeetingList from '../../components/MeetingList'
-import CollisionList from '../../components/CollisionList'
+import Calendar from '../calendar/components/Calendar'
+import MeetingList from '../dashboard/components/MeetingList'
+import CollisionList from '../calendar/components/CollisionList'
 import { detectCollisions } from '../../utils/collisions'
 import '../dashboard/dashboard.css'
 

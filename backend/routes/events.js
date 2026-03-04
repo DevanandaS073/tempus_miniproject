@@ -1,14 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const eventsController = require('../controllers/eventsController');
-const { authenticateToken, optionalAuthenticateToken } = require('../middleware/authMiddleware');
+const { authenticateToken } = require('../middleware/authMiddleware');
+const { requireTenant } = require('../middleware/tenantMiddleware');
 const { isAdmin } = require('../middleware/roleMiddleware');
 
+// Global Protection: Must be authenticated AND belong to a workspace
+router.use(authenticateToken);
+router.use(requireTenant);
+
 // Routes for /api/events
-router.get('/', optionalAuthenticateToken, eventsController.getEvents);                          // Public with optional auth
-router.post('/', authenticateToken, isAdmin, eventsController.createEvent);    // Protected + Admin Only
-router.get('/my-events', authenticateToken, eventsController.getUserEvents);   // Protected (Worker/Personal)
-router.get('/:id/participants', authenticateToken, isAdmin, eventsController.getEventParticipants); // Protected + Admin
-router.post('/join', authenticateToken, eventsController.joinEvent);  // Protected
+router.get('/', eventsController.getEvents);
+router.post('/', isAdmin, eventsController.createEvent);
+router.get('/my-events', eventsController.getUserEvents);
+router.get('/:id/participants', isAdmin, eventsController.getEventParticipants);
+router.post('/join', eventsController.joinEvent);
 
 module.exports = router;

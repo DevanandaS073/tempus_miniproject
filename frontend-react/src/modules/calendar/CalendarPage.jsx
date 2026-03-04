@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import Calendar from '../../components/Calendar'
-import DayDetail from '../../components/DayDetail'
-import MeetingModal from '../../components/MeetingModal'
-import EventModal from '../../components/EventModal'
+import Calendar from './components/Calendar'
+import DayDetail from './components/DayDetail'
+import MeetingModal from './components/MeetingModal'
+import EventModal from './components/EventModal'
 
 export default function CalendarPage() {
     const { user, token } = useAuth()

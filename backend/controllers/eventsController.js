@@ -9,6 +9,9 @@ const getEvents = async (req, res) => {
         if (type) whereClause.event_type = type;
         if (search) whereClause.title = { contains: search, mode: 'insensitive' };
 
+        // Tenant Isolation: Force all queries to scope to the user's workspace
+        whereClause.company_id = req.user.company_id;
+
         let events = await prisma.events.findMany({
             where: whereClause,
             orderBy: { start_date: 'asc' }
@@ -39,6 +42,7 @@ const createEvent = async (req, res) => {
     try {
         const { title, description, event_type, start_date, end_date, location } = req.body;
         const userId = req.user.id;
+        const companyId = req.user.company_id;
         const startDt = new Date(start_date);
         const endDt = new Date(end_date);
         const force = req.query.force === 'true';
@@ -46,7 +50,7 @@ const createEvent = async (req, res) => {
         if (!force) {
             const eventConflict = await prisma.events.findFirst({
                 where: {
-                    created_by: userId,
+                    company_id: companyId,
                     start_date: { lt: endDt },
                     end_date: { gt: startDt }
                 }
@@ -82,6 +86,7 @@ const createEvent = async (req, res) => {
         // 3. Create Event
         const newEvent = await prisma.events.create({
             data: {
+                company_id: companyId,
                 title,
                 description,
                 event_type,

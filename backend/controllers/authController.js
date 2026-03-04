@@ -1,11 +1,18 @@
 const prisma = require('../prismaClient');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 exports.login = async (req, res) => {
     const { email, password } = req.body;
+
+    // Server-side validation
+    if (!email || !email.trim() || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+    }
+
     try {
         const user = await prisma.users.findUnique({
-            where: { email },
+            where: { email: email.trim().toLowerCase() },
             include: {
                 role: {
                     include: {
@@ -18,11 +25,12 @@ exports.login = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(401).json({ error: 'User not found' });
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        if (user.password_hash !== password) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+        const isValidPassword = await bcrypt.compare(password, user.password_hash);
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         // Map the complicated role_features graph into a simple array of permission strings
@@ -63,17 +71,37 @@ exports.login = async (req, res) => {
 exports.signup = async (req, res) => {
     const { email, password, name } = req.body;
 
-    const parts = (name || '').trim().split(' ');
-    const first_name = parts[0] || '';
+    // ── Server-side input validation ──
+    if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Full name is required' });
+    }
+    if (!email || !email.trim()) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+    if (!password || password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const parts = name.trim().split(' ');
+    const first_name = parts[0];
     const last_name = parts.slice(1).join(' ') || '';
 
     try {
+        // Hash the password before storing
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const user = await prisma.users.create({
             data: {
-                email,
+                email: email.trim().toLowerCase(),
                 first_name,
                 last_name,
-                password_hash: password,
+                password_hash: hashedPassword,
                 company_id: null, // Explicitly joining as Free Agent
                 role_id: null
             }
@@ -83,6 +111,7 @@ exports.signup = async (req, res) => {
         if (err.code === 'P2002') {
             return res.status(400).json({ error: 'Email already exists' });
         }
+        console.error('Signup error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
@@ -146,17 +175,20 @@ exports.updatePassword = async (req, res) => {
 
         const user = await prisma.users.findUnique({ where: { id: userId } });
 
-        // Handling the insecure plain-text passwords currently in the DB
-        const validPassword = currentPassword === user.password_hash;
+        // Compare the current password against the stored bcrypt hash
+        const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
 
         if (!validPassword) {
             return res.status(401).json({ error: 'Incorrect current password' });
         }
 
-        // Just saving it as plain text directly since the assignment seemingly doesn't ask for bcrypt overhauls yet
+        // Hash the new password before saving
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
         await prisma.users.update({
             where: { id: userId },
-            data: { password_hash: newPassword }
+            data: { password_hash: hashedNewPassword }
         });
 
         res.json({ message: 'Password updated successfully' });

@@ -2,10 +2,13 @@ const prisma = require('../prismaClient');
 
 const getAdminStats = async (req, res) => {
     try {
+        const companyId = req.user.company_id;
+
+        // Tenant Isolation: Only count entities that physically belong to this Workspace
         const [totalWorkers, totalEvents, totalRSVPs] = await Promise.all([
-            prisma.users.count({ where: { role: 'user' } }),
-            prisma.events.count(),
-            prisma.event_participants.count()
+            prisma.users.count({ where: { company_id: companyId } }),
+            prisma.events.count({ where: { company_id: companyId } }),
+            prisma.event_participants.count({ where: { event: { company_id: companyId } } })
         ]);
 
         res.json({ totalWorkers, totalEvents, totalRSVPs });

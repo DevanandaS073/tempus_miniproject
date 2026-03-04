@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import InviteUser from '../../components/InviteUser'; // Relocating from Settings panel
+import InviteUser from './components/InviteUser'; // Relocating from Settings panel
 
 export default function NetworkPage() {
     const { user, token } = useAuth();

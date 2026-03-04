@@ -6,7 +6,10 @@ exports.getNotifications = async (req, res) => {
         const limit = parseInt(req.query.limit) || 20;
 
         const notifications = await prisma.notifications.findMany({
-            where: { user_id: userId },
+            where: {
+                user_id: userId,
+                is_read: false
+            },
             orderBy: { created_at: 'desc' },
             take: limit
         });

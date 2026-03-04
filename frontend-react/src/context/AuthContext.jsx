@@ -75,10 +75,17 @@ export function AuthProvider({ children }) {
         setUser(newUser)
     }
 
+    const hasFeature = (featureName) => {
+        if (!user || (!user.permissions && !user.features)) return false;
+        // The token might have saved them as permissions or features based on the backend iteration
+        const userFeatures = user.permissions || user.features || [];
+        return userFeatures.includes(featureName);
+    };
+
     return (
         <AuthContext.Provider value={{
             user, token, isAuthenticated: !!token, isInitializing,
-            login, signup, forgotPassword, logout, updateSession
+            hasFeature, login, signup, forgotPassword, logout, updateSession
         }}>
             {children}
         </AuthContext.Provider>

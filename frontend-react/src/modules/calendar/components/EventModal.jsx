@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../../context/AuthContext'
 
 const EVENT_TYPES = ['conference', 'workshop', 'seminar', 'social', 'training', 'other']
 

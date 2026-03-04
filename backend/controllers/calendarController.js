@@ -103,13 +103,21 @@ const createMeeting = async (req, res) => {
     }
 };
 
-// Delete a meeting
 const deleteMeeting = async (req, res) => {
     try {
         const { id } = req.params;
+        const companyId = req.user.company_id;
+
+        // Security: Prevent cross-tenant deletions
+        const meeting = await prisma.meetings.findUnique({ where: { meeting_id: parseInt(id) } });
+        if (!meeting || meeting.company_id !== companyId) {
+            return res.status(404).json({ error: 'Meeting not found' });
+        }
+
         await prisma.meetings.delete({ where: { meeting_id: parseInt(id) } });
         res.json({ message: 'Meeting cancelled successfully' });
     } catch (error) {
+        console.error("DELETE Meeting Error:", error);
         res.status(500).json({ error: 'Failed to delete meeting' });
     }
 };
