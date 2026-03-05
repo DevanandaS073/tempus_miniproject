@@ -8,7 +8,7 @@ const requireFeature = (featureCode) => {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
-        const userFeatures = req.user.features || [];
+        const userFeatures = req.user.permissions || [];
 
         if (!userFeatures.includes(featureCode)) {
             return res.status(403).json({

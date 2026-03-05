@@ -79,7 +79,7 @@ export default function InviteUser() {
                             placeholder="e.g. nolan@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            style={{ padding: '10px 15px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', fontSize: '0.95rem', background: 'var(--bg-main)', color: 'white' }}
+                            style={{ padding: '10px 15px', border: '1px solid var(--border-color)', borderRadius: '0', fontSize: '0.95rem', background: '#18181b', color: 'white' }}
                         />
                     </div>
 
@@ -89,7 +89,7 @@ export default function InviteUser() {
                             value={roleId}
                             onChange={(e) => setRoleId(e.target.value)}
                             disabled={isLoadingRoles || roles.length === 0}
-                            style={{ padding: '10px 15px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', fontSize: '0.95rem', background: 'var(--bg-main)', color: 'white' }}
+                            style={{ padding: '10px 15px', border: '1px solid var(--border-color)', borderRadius: '0', fontSize: '0.95rem', background: '#18181b', color: 'white', colorScheme: 'dark' }}
                         >
                             {isLoadingRoles ? (
                                 <option>Loading roles...</option>
@@ -104,7 +104,7 @@ export default function InviteUser() {
                     </div>
 
                     {status.msg && (
-                        <div style={{ padding: '10px', borderRadius: '6px', fontSize: '0.85rem', color: status.type === 'error' ? '#dc2626' : status.type === 'success' ? '#16a34a' : 'var(--text-secondary)', background: status.type === 'error' ? '#fee2e2' : status.type === 'success' ? '#dcfce7' : 'var(--bg-blue-light)' }}>
+                        <div style={{ padding: '10px', borderRadius: '0', fontSize: '0.85rem', color: status.type === 'error' ? '#f87171' : status.type === 'success' ? '#4ade80' : 'var(--text-secondary)', background: status.type === 'error' ? 'rgba(220,38,38,0.1)' : status.type === 'success' ? 'rgba(22,163,74,0.1)' : 'var(--bg-blue-light)' }}>
                             {status.msg}
                         </div>
                     )}

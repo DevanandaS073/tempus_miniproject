@@ -1,7 +1,8 @@
 const express = require('express');
-const { getCompanyUsers } = require('../controllers/networkController');
+const { getCompanyUsers, updateUserRole } = require('../controllers/networkController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireTenant } = require('../middleware/tenantMiddleware');
+const { requireFeature } = require('../middleware/rbacMiddleware');
 
 const router = express.Router();
 
@@ -11,5 +12,8 @@ router.use(requireTenant);
 
 // Fetch all users in the authenticated user's company
 router.get('/users', getCompanyUsers);
+
+// Assign a new role to a specific user (requires role:assign permission)
+router.put('/users/:id/role', requireFeature('role:assign'), updateUserRole);
 
 module.exports = router;
