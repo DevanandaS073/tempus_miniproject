@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 
 /**
- * MeetingModal — Create new meeting
+ * MeetingModal — Create or Edit a meeting
  */
-export default function MeetingModal({ isOpen, onClose, onCreated }) {
+export default function MeetingModal({ isOpen, onClose, onCreated, meeting }) {
     const { token } = useAuth()
+    const isEditMode = !!meeting
+
     const [form, setForm] = useState({
         title: '',
         date: new Date().toISOString().split('T')[0],
@@ -14,6 +16,29 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
     })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+
+    // Pre-fill in edit mode
+    useEffect(() => {
+        if (meeting) {
+            const start = new Date(meeting.start_time)
+            const end = new Date(meeting.end_time)
+            const durationHrs = (end - start) / (1000 * 60 * 60)
+            setForm({
+                title: meeting.title || '',
+                date: start.toISOString().split('T')[0],
+                time: start.toTimeString().slice(0, 5),
+                duration: durationHrs || 1,
+            })
+        } else {
+            setForm({
+                title: '',
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toTimeString().slice(0, 5),
+                duration: 1,
+            })
+        }
+        setError('')
+    }, [meeting, isOpen])
 
     if (!isOpen) return null
 
@@ -26,8 +51,13 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
             const startTime = new Date(`${form.date}T${form.time}`)
             const endTime = new Date(startTime.getTime() + form.duration * 60 * 60 * 1000)
 
-            const res = await fetch('/api/calendar/meetings', {
-                method: 'POST',
+            const url = isEditMode
+                ? `/api/calendar/meetings/${meeting.meeting_id}`
+                : '/api/calendar/meetings'
+            const method = isEditMode ? 'PUT' : 'POST'
+
+            const res = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
@@ -41,10 +71,9 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
 
             if (!res.ok) {
                 const data = await res.json()
-                throw new Error(data.error || 'Failed to create meeting')
+                throw new Error(data.error || `Failed to ${isEditMode ? 'update' : 'create'} meeting`)
             }
 
-            setForm({ title: '', date: new Date().toISOString().split('T')[0], time: new Date().toTimeString().slice(0, 5), duration: 1 })
             onCreated?.()
             onClose()
         } catch (err) {
@@ -60,7 +89,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
             <div className="glass-card p-6 w-full max-w-md relative z-10" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-white">
-                        <i className="fas fa-video text-blue-400 mr-2" />New Meeting
+                        <i className="fas fa-video text-blue-400 mr-2" />{isEditMode ? 'Edit Meeting' : 'New Meeting'}
                     </h3>
                     <button onClick={onClose} className="text-zinc-400 hover:text-white">
                         <i className="fas fa-times" />
@@ -92,6 +121,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                                 value={form.date}
                                 onChange={e => setForm({ ...form, date: e.target.value })}
                                 className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                                style={{ colorScheme: 'dark' }}
                             />
                         </div>
                         <div>
@@ -101,6 +131,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                                 value={form.time}
                                 onChange={e => setForm({ ...form, time: e.target.value })}
                                 className="w-full bg-white/5 border border-white/10 rounded-none px-4 py-2.5 text-sm text-white outline-none focus:border-zinc-400 transition-colors"
+                                style={{ colorScheme: 'dark' }}
                             />
                         </div>
                     </div>
@@ -121,7 +152,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated }) {
                         disabled={loading}
                         className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-none font-medium transition-colors disabled:opacity-50"
                     >
-                        {loading ? 'Creating...' : 'Create Meeting'}
+                        {loading ? 'Saving...' : isEditMode ? 'Update Meeting' : 'Create Meeting'}
                     </button>
                 </form>
             </div>

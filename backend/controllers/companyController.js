@@ -32,7 +32,49 @@ exports.createCompany = async (req, res) => {
             });
 
             // B. Set up RBAC for the new company
-            const allFeatures = await tx.features.findMany();
+            let allFeatures = await tx.features.findMany();
+
+            // If the database was just reset and has no features, auto-seed the foundational 10
+            if (allFeatures.length === 0) {
+                const foundationalFeatures = [
+                    // 1. Calendar & Meetings
+                    { code: 'calendar:view', name: 'View Calendar' },
+                    { code: 'meeting:create', name: 'Schedule Meetings' },
+                    { code: 'meeting:edit_own', name: 'Edit Own Meetings' },
+                    { code: 'meeting:edit_any', name: 'Edit Any Meeting' },
+                    { code: 'meeting:delete_own', name: 'Cancel Own Meetings' },
+                    { code: 'meeting:delete_any', name: 'Cancel Any Meeting' },
+
+                    // 2. Events & Operations
+                    { code: 'event:view', name: 'View Operations' },
+                    { code: 'event:join', name: 'RSVP to Events' },
+                    { code: 'event:create', name: 'Create Operations' },
+                    { code: 'event:edit', name: 'Edit Operations' },
+                    { code: 'event:delete', name: 'Cancel Operations' },
+                    { code: 'event:generate_poster', name: 'Generate AI Posters' },
+
+                    // 3. Network & Directory
+                    { code: 'network:view', name: 'View Directory' },
+                    { code: 'network:invite_user', name: 'Send Invites' },
+                    { code: 'network:remove_user', name: 'Remove Users' },
+
+                    // 4. Admin Settings & Identity
+                    { code: 'admin:view_settings', name: 'Access Settings' },
+                    { code: 'role:create', name: 'Create Custom Roles' },
+                    { code: 'role:edit', name: 'Edit Custom Roles' },
+                    { code: 'role:delete', name: 'Delete Custom Roles' },
+                    { code: 'role:assign', name: 'Promote/Demote Users' },
+                    { code: 'company:update_info', name: 'Modify Identity' },
+
+                    // 5. Reports & Analytics
+                    { code: 'reports:personal', name: 'View Personal Stats' },
+                    { code: 'reports:company', name: 'View Global Stats' },
+                    { code: 'reports:export', name: 'Export Analytics' }
+                ];
+
+                await tx.features.createMany({ data: foundationalFeatures });
+                allFeatures = await tx.features.findMany(); // Re-fetch the newly created IDs
+            }
 
             const adminRole = await tx.roles.create({
                 data: {
@@ -108,6 +150,45 @@ exports.createCompany = async (req, res) => {
     } catch (error) {
         console.error('Error creating company:', error);
         res.status(500).json({ error: 'Failed to create company', details: error.message, stack: error.stack });
+    }
+};
+
+exports.getCompany = async (req, res) => {
+    try {
+        const companyId = req.user.company_id;
+        if (!companyId) return res.status(403).json({ error: 'User is not part of a company' });
+
+        const company = await prisma.companies.findUnique({
+            where: { id: companyId },
+            select: { id: true, name: true, subdomain: true, created_at: true }
+        });
+
+        if (!company) return res.status(404).json({ error: 'Company not found' });
+        res.json(company);
+    } catch (error) {
+        console.error('Error fetching company:', error);
+        res.status(500).json({ error: 'Failed to fetch company details' });
+    }
+};
+
+exports.updateCompany = async (req, res) => {
+    try {
+        const companyId = req.user.company_id;
+        const { name } = req.body;
+
+        if (!companyId) return res.status(403).json({ error: 'User is not part of a company' });
+        if (!name || !name.trim()) return res.status(400).json({ error: 'Company name is required' });
+
+        const updatedCompany = await prisma.companies.update({
+            where: { id: companyId },
+            data: { name: name.trim() },
+            select: { id: true, name: true, subdomain: true, created_at: true }
+        });
+
+        res.json({ message: 'Company updated successfully', company: updatedCompany });
+    } catch (error) {
+        console.error('Error updating company:', error);
+        res.status(500).json({ error: 'Failed to update company' });
     }
 };
 

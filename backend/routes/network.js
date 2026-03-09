@@ -11,7 +11,7 @@ router.use(authenticateToken);
 router.use(requireTenant);
 
 // Fetch all users in the authenticated user's company
-router.get('/users', getCompanyUsers);
+router.get('/users', requireFeature('network:view'), getCompanyUsers);
 
 // Assign a new role to a specific user (requires role:assign permission)
 router.put('/users/:id/role', requireFeature('role:assign'), updateUserRole);

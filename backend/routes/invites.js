@@ -2,6 +2,7 @@ const express = require('express');
 const { sendInvite, acceptInvite, declineInvite } = require('../controllers/inviteController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireTenant } = require('../middleware/tenantMiddleware');
+const { requireFeature } = require('../middleware/rbacMiddleware');
 
 const router = express.Router();
 
@@ -9,7 +10,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Admin sends an invite (Type 3 -> Type 1)
-router.post('/send', requireTenant, sendInvite);
+router.post('/send', requireTenant, requireFeature('network:invite_user'), sendInvite);
 
 // Free Agent accepts an invite (Morphs into Type 2/3)
 router.post('/accept/:notification_id', acceptInvite);

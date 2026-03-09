@@ -1,5 +1,14 @@
-export default function DayDetail({ selectedDate, events = [], meetings = [], onClose }) {
+import { useState } from 'react'
+import { useAuth } from '../../../context/AuthContext'
+
+export default function DayDetail({ selectedDate, events = [], meetings = [], onClose, onEditMeeting, onDeleteMeeting }) {
     if (!selectedDate) return null
+
+    const { hasFeature, user } = useAuth()
+    const canEditOwn = hasFeature('meeting:edit_own')
+    const canEditAny = hasFeature('meeting:edit_any')
+    const canDeleteOwn = hasFeature('meeting:delete_own')
+    const canDeleteAny = hasFeature('meeting:delete_any')
 
     const { year, month, day } = selectedDate
     const dateStr = new Date(year, month, day).toLocaleDateString('en-US', {
@@ -15,6 +24,8 @@ export default function DayDetail({ selectedDate, events = [], meetings = [], on
         const d = new Date(e.start_date || e.date)
         return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year
     })
+
+    const [deletingMeetingId, setDeletingMeetingId] = useState(null)
 
     return (
         <div className="day-detail open">
@@ -47,10 +58,72 @@ export default function DayDetail({ selectedDate, events = [], meetings = [], on
                                         <div className="meeting-time">
                                             <span>{timeText}</span><span>{ampmText}</span>
                                         </div>
-                                        <div className="meeting-info">
+                                        <div className="meeting-info" style={{ flex: 1 }}>
                                             <h4>{isEvent ? m.title.replace('[Event] ', '') : m.title}</h4>
-                                            <p>{isEvent ? 'Joined Event' : (m.participants || '')}</p>
+                                            <p>{isEvent ? 'Joined Event' : `${m.participants?.length || 0} participants`}</p>
                                         </div>
+                                        {/* Edit / Delete buttons — ownership-aware */}
+                                        {(() => {
+                                            const isCreator = m.created_by === user?.id;
+                                            const showEdit = canEditAny || (canEditOwn && isCreator);
+                                            const showDelete = canDeleteAny || (canDeleteOwn && isCreator);
+                                            if (isEvent || (!showEdit && !showDelete)) return null;
+                                            return (
+                                                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: '8px' }}>
+                                                    {showEdit && onEditMeeting && (
+                                                        <button
+                                                            onClick={() => onEditMeeting(m)}
+                                                            style={{
+                                                                padding: '4px 8px', fontSize: '10px', fontWeight: 'bold',
+                                                                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                                                                color: '#a1a1aa', cursor: 'pointer', textTransform: 'uppercase',
+                                                                letterSpacing: '0.05em'
+                                                            }}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    )}
+                                                    {showDelete && onDeleteMeeting && (
+                                                        deletingMeetingId === m.meeting_id ? (
+                                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                                <button
+                                                                    onClick={() => { onDeleteMeeting(m.meeting_id); setDeletingMeetingId(null); }}
+                                                                    style={{
+                                                                        padding: '4px 8px', fontSize: '10px', fontWeight: 'bold',
+                                                                        background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
+                                                                        color: '#f87171', cursor: 'pointer', textTransform: 'uppercase'
+                                                                    }}
+                                                                >
+                                                                    Confirm
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setDeletingMeetingId(null)}
+                                                                    style={{
+                                                                        padding: '4px 6px', fontSize: '10px',
+                                                                        background: 'transparent', border: 'none',
+                                                                        color: '#71717a', cursor: 'pointer'
+                                                                    }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => setDeletingMeetingId(m.meeting_id)}
+                                                                style={{
+                                                                    padding: '4px 8px', fontSize: '10px', fontWeight: 'bold',
+                                                                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                                                                    color: '#a1a1aa', cursor: 'pointer', textTransform: 'uppercase',
+                                                                    letterSpacing: '0.05em'
+                                                                }}
+                                                            >
+                                                                Del
+                                                            </button>
+                                                        )
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )
                             })}
@@ -72,7 +145,7 @@ export default function DayDetail({ selectedDate, events = [], meetings = [], on
                                     </div>
                                     <div className="meeting-info">
                                         <h4>{e.title}</h4>
-                                        <p>{e.type} {e.location && `· ${e.location}`}</p>
+                                        <p>{e.event_type || e.type} {e.location && `· ${e.location}`}</p>
                                     </div>
                                 </div>
                             ))}

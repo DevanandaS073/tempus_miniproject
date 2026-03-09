@@ -6,6 +6,8 @@ import CalendarPage from './modules/calendar/CalendarPage'
 import PosterGenPage from './modules/poster/PosterGenPage'
 import FreeAgentPage from './modules/onboarding/FreeAgentPage'
 import NetworkPage from './modules/network/NetworkPage'
+import OperationsPage from './modules/operations/OperationsPage'
+import SettingsPage from './modules/settings/SettingsPage'
 import RoleList from './modules/settings/RoleList'
 import RoleBuilder from './modules/settings/RoleBuilder'
 import AppLayout from './components/AppLayout'
@@ -34,6 +36,10 @@ function App() {
           <FeatureRoute requiredFeature="network:view"><NetworkPage /></FeatureRoute>
         } />
 
+        <Route path="/operations" element={
+          <FeatureRoute requiredFeature="event:view"><OperationsPage /></FeatureRoute>
+        } />
+
         <Route path="/reports" element={
           <FeatureRoute requiredFeature="reports:personal">
             <div className="flex items-center justify-center p-20">
@@ -45,9 +51,7 @@ function App() {
         {/* ─── Settings & Role Management ──────────────────────────────── */}
         <Route path="/settings" element={
           <TenantRoute>
-            <div className="flex items-center justify-center p-20">
-              <h1 className="text-zinc-600 font-mono text-xl tracking-widest uppercase">Global Settings (Coming Soon)</h1>
-            </div>
+            <SettingsPage />
           </TenantRoute>
         } />
 

@@ -3,15 +3,15 @@ const router = express.Router();
 const statsController = require('../controllers/statsController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireTenant } = require('../middleware/tenantMiddleware');
-const { isAdmin } = require('../middleware/roleMiddleware');
+const { requireFeature } = require('../middleware/rbacMiddleware');
 
 router.use(authenticateToken);
 router.use(requireTenant);
 
-// Get high-level organizational analytics for the Admin UI
-router.get('/admin', isAdmin, statsController.getAdminStats);
+// Get high-level organizational analytics (requires reports:company feature)
+router.get('/admin', requireFeature('reports:company'), statsController.getAdminStats);
 
-// Get personal analytics for the Worker UI
-router.get('/worker', statsController.getWorkerStats);
+// Get personal analytics (requires reports:personal feature)
+router.get('/worker', requireFeature('reports:personal'), statsController.getWorkerStats);
 
 module.exports = router;

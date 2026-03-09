@@ -6,10 +6,11 @@ import MeetingModal from './components/MeetingModal'
 import EventModal from './components/EventModal'
 
 export default function CalendarPage() {
-    const { user, token } = useAuth()
+    const { user, token, hasFeature } = useAuth()
     const [selectedDate, setSelectedDate] = useState(null)
     const [showMeetingModal, setShowMeetingModal] = useState(false)
     const [showEventModal, setShowEventModal] = useState(false)
+    const [editingMeeting, setEditingMeeting] = useState(null)
 
     const [data, setData] = useState({ meetings: [], events: [] })
 
@@ -46,6 +47,28 @@ export default function CalendarPage() {
         })),
     ].sort((a, b) => a.date - b.date).filter(i => i.date >= new Date()).slice(0, 10)
 
+    // Meeting management
+    const handleEditMeeting = (meeting) => {
+        setEditingMeeting(meeting)
+        setShowMeetingModal(true)
+    }
+
+    const handleDeleteMeeting = async (meetingId) => {
+        try {
+            const res = await fetch(`/api/calendar/meetings/${meetingId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            if (!res.ok) {
+                const data = await res.json()
+                console.error(data.error)
+            }
+            fetchData()
+        } catch (err) {
+            console.error('Failed to delete meeting:', err)
+        }
+    }
+
     return (
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
             <header className="flex flex-col gap-2 mb-2">
@@ -55,14 +78,18 @@ export default function CalendarPage() {
 
             {/* Action buttons */}
             <div className="flex gap-4 mb-2">
-                <button onClick={() => setShowMeetingModal(true)}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-none text-sm font-bold tracking-widest uppercase transition-colors">
-                    + New Meeting
-                </button>
-                <button onClick={() => setShowEventModal(true)}
-                    className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-none text-sm font-bold tracking-widest uppercase transition-colors">
-                    + New Event
-                </button>
+                {hasFeature('meeting:create') && (
+                    <button onClick={() => setShowMeetingModal(true)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-none text-sm font-bold tracking-widest uppercase transition-colors">
+                        + New Meeting
+                    </button>
+                )}
+                {hasFeature('event:create') && (
+                    <button onClick={() => setShowEventModal(true)}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-none text-sm font-bold tracking-widest uppercase transition-colors">
+                        + New Event
+                    </button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -100,11 +127,22 @@ export default function CalendarPage() {
             </div>
 
             {/* Modals */}
-            <MeetingModal isOpen={showMeetingModal} onClose={() => setShowMeetingModal(false)} onCreated={fetchData} />
+            <MeetingModal
+                isOpen={showMeetingModal}
+                meeting={editingMeeting}
+                onClose={() => { setShowMeetingModal(false); setEditingMeeting(null); }}
+                onCreated={fetchData}
+            />
             <EventModal isOpen={showEventModal} onClose={() => setShowEventModal(false)} onCreated={fetchData} />
             {selectedDate && (
-                <DayDetail selectedDate={selectedDate} events={data.events} meetings={data.meetings}
-                    onClose={() => setSelectedDate(null)} />
+                <DayDetail
+                    selectedDate={selectedDate}
+                    events={data.events}
+                    meetings={data.meetings}
+                    onClose={() => setSelectedDate(null)}
+                    onEditMeeting={handleEditMeeting}
+                    onDeleteMeeting={handleDeleteMeeting}
+                />
             )}
         </div>
     )

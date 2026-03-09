@@ -6,8 +6,6 @@ import TopBar from '../../components/TopBar';
 export default function FreeAgentPage() {
     const navigate = useNavigate();
     const { user, logout, updateSession } = useAuth();
-    const [loadingJoin, setLoadingJoin] = useState(false);
-    const [joinCode, setJoinCode] = useState('');
     const [menuOpen, setMenuOpen] = useState(false);
 
     // Create Company State
@@ -47,16 +45,6 @@ export default function FreeAgentPage() {
     const handleLogout = () => {
         logout();
         navigate('/', { replace: true });
-    };
-
-    const handleJoinCompany = (e) => {
-        e.preventDefault();
-        setLoadingJoin(true);
-        // Placeholder API Call for Phase 3 Join Logic
-        setTimeout(() => {
-            setLoadingJoin(false);
-            navigate('/dashboard');
-        }, 1500);
     };
 
     return (
@@ -123,40 +111,6 @@ export default function FreeAgentPage() {
                                 Configure Hub
                             </button>
                         )}
-                    </div>
-
-                    {/* Pillar 2: Join Company */}
-                    <div className="flex-1 bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-none p-10 flex flex-col items-center justify-between text-center min-h-[400px]">
-                        <div className="w-full">
-                            <div className="w-20 h-20 bg-slate-800/50 border border-slate-600 rounded-none flex items-center justify-center mx-auto mb-6 text-slate-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10">
-                                    <path strokeLinecap="square" strokeLinejoin="miter" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                                </svg>
-                            </div>
-                            <h2 className="text-2xl font-semibold mb-3 text-slate-100">Attach to Hub</h2>
-                            <p className="text-slate-400 mb-8">I have been explicitly invited by my employer via an organizational access code.</p>
-                        </div>
-
-                        <form onSubmit={handleJoinCompany} className="w-full">
-                            <input
-                                type="text"
-                                value={joinCode}
-                                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                                placeholder="e.g., TECHCORP-123"
-                                className="w-full bg-slate-950 border border-slate-700 text-white px-4 py-4 mb-4 focus:outline-none focus:border-blue-500 transition-colors text-center text-lg tracking-widest rounded-none placeholder:text-slate-600 placeholder:tracking-normal placeholder:font-light"
-                            />
-                            <button
-                                type="submit"
-                                disabled={joinCode.length < 8 || loadingJoin}
-                                className={`w-full py-4 font-bold tracking-[0.1em] uppercase transition-colors rounded-none border 
-                  ${joinCode.length >= 8 && !loadingJoin
-                                        ? 'bg-blue-600 border-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                                        : 'bg-transparent border-slate-700 text-slate-500 cursor-not-allowed'
-                                    }`}
-                            >
-                                {loadingJoin ? 'Validating...' : 'Link Account'}
-                            </button>
-                        </form>
                     </div>
 
                 </div>

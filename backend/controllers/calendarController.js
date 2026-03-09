@@ -103,15 +103,93 @@ const createMeeting = async (req, res) => {
     }
 };
 
+// Update an existing meeting
+const updateMeeting = async (req, res) => {
+    try {
+        const meetingId = parseInt(req.params.id);
+        const userId = req.user.id;
+        const companyId = req.user.company_id;
+        const permissions = req.user.permissions || [];
+        const { title, description, start_time, end_time } = req.body;
+
+        if (!companyId) return res.status(403).json({ error: 'User must belong to a workspace.' });
+
+        // Verify meeting exists and belongs to this company
+        const existingMeeting = await prisma.meetings.findFirst({
+            where: { meeting_id: meetingId, company_id: companyId }
+        });
+        if (!existingMeeting) {
+            return res.status(404).json({ error: 'Meeting not found in your workspace' });
+        }
+
+        // Ownership-based RBAC: edit_own vs edit_any
+        const isCreator = existingMeeting.created_by === userId;
+        if (isCreator && !permissions.includes('meeting:edit_own')) {
+            return res.status(403).json({ error: 'You do not have permission to edit your own meetings.' });
+        }
+        if (!isCreator && !permissions.includes('meeting:edit_any')) {
+            return res.status(403).json({ error: 'You do not have permission to edit other users\' meetings.' });
+        }
+
+        // Build update data
+        const updateData = {};
+        if (title) updateData.title = title;
+        if (description !== undefined) updateData.description = description;
+        if (start_time) updateData.start_time = new Date(start_time);
+        if (end_time) updateData.end_time = new Date(end_time);
+
+        // Conflict check (exclude the meeting being edited)
+        const newStart = updateData.start_time || existingMeeting.start_time;
+        const newEnd = updateData.end_time || existingMeeting.end_time;
+
+        const meetingConflict = await prisma.meetings.findFirst({
+            where: {
+                company_id: companyId,
+                meeting_id: { not: meetingId },
+                start_time: { lt: newEnd },
+                end_time: { gt: newStart }
+            }
+        });
+
+        if (meetingConflict) {
+            return res.status(409).json({
+                error: `Time conflicts with existing meeting: "${meetingConflict.title}"`,
+                conflictWith: { type: 'meeting', title: meetingConflict.title, start: meetingConflict.start_time, end: meetingConflict.end_time }
+            });
+        }
+
+        const updatedMeeting = await prisma.meetings.update({
+            where: { meeting_id: meetingId },
+            data: updateData
+        });
+
+        res.json(updatedMeeting);
+    } catch (error) {
+        console.error("PUT Meeting Error:", error);
+        res.status(500).json({ error: 'Failed to update meeting', details: error.message });
+    }
+};
+
 const deleteMeeting = async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.user.id;
         const companyId = req.user.company_id;
+        const permissions = req.user.permissions || [];
 
         // Security: Prevent cross-tenant deletions
         const meeting = await prisma.meetings.findUnique({ where: { meeting_id: parseInt(id) } });
         if (!meeting || meeting.company_id !== companyId) {
             return res.status(404).json({ error: 'Meeting not found' });
+        }
+
+        // Ownership-based RBAC: delete_own vs delete_any
+        const isCreator = meeting.created_by === userId;
+        if (isCreator && !permissions.includes('meeting:delete_own')) {
+            return res.status(403).json({ error: 'You do not have permission to cancel your own meetings.' });
+        }
+        if (!isCreator && !permissions.includes('meeting:delete_any')) {
+            return res.status(403).json({ error: 'You do not have permission to cancel other users\' meetings.' });
         }
 
         await prisma.meetings.delete({ where: { meeting_id: parseInt(id) } });
@@ -122,4 +200,5 @@ const deleteMeeting = async (req, res) => {
     }
 };
 
-module.exports = { getMeetings, createMeeting, deleteMeeting };
+module.exports = { getMeetings, createMeeting, updateMeeting, deleteMeeting };
+

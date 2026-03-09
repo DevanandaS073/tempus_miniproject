@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
     createCompany,
+    getCompany,
+    updateCompany,
     getRoles,
     getRoleById,
     createRole,
@@ -15,6 +17,14 @@ const { requireFeature } = require('../middleware/rbacMiddleware');
 // Route: POST /api/companies
 // Description: Create a new company and assign the requesting user as the Admin
 router.post('/', authenticateToken, createCompany);
+
+// Route: GET /api/companies/current
+// Description: Get the currently authenticated user's company settings
+router.get('/current', authenticateToken, requireTenant, requireFeature('admin:view_settings'), getCompany);
+
+// Route: PUT /api/companies/current
+// Description: Update the current user's company settings (requires company:update_info feature)
+router.put('/current', authenticateToken, requireTenant, requireFeature('company:update_info'), updateCompany);
 
 // ─── Role CRUD Routes (All require tenant + RBAC) ──────────────────────────
 
