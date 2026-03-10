@@ -139,7 +139,11 @@ model events {
   creator       users     @relation("event_creator", fields: [created_by], references: [id])
   participants  event_participants[]
   
+  certificate_template_id Int?
+  certificate_template    certificate_templates? @relation(fields: [certificate_template_id], references: [id])
+  
   generated_posters generated_posters[]
+  generated_certificates generated_certificates[]
 }
 
 model event_participants {
@@ -150,6 +154,7 @@ model event_participants {
 
   event         events   @relation(fields: [event_id], references: [event_id], onDelete: Cascade)
   user          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  generated_certificates generated_certificates[]
 
   @@unique([event_id, user_id])
 }
@@ -189,6 +194,40 @@ model generated_posters {
   @@index([template_id])
   @@index([status])
   @@index([generated_at])
+}
+
+model certificate_templates {
+  id               Int                      @id @default(autoincrement())
+  name             String                   @db.VarChar(255)
+  event_type       String                   @db.VarChar(100)
+  file_path        String                   @db.VarChar(500)
+  is_active        Boolean                  @default(true)
+  created_at       DateTime                 @default(now()) @db.Timestamp(6)
+
+  generated_certificates generated_certificates[]
+  events                 events[]
+
+  @@index([event_type])
+  @@index([is_active])
+}
+
+model generated_certificates {
+  id               Int                    @id @default(autoincrement())
+  participant_id   Int
+  template_id      Int
+  event_id         Int
+  certificate_path String                 @db.VarChar(500)
+  generated_at     DateTime               @default(now()) @db.Timestamp(6)
+  status           Status                 @default(pending)
+
+  participant      event_participants     @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  template         certificate_templates  @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  event            events                 @relation(fields: [event_id], references: [event_id], onDelete: Cascade)
+
+  @@index([participant_id])
+  @@index([event_id])
+  @@index([template_id])
+  @@index([status])
 }
 
 model notifications {

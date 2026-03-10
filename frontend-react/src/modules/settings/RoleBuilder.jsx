@@ -24,6 +24,7 @@ const FEATURE_GROUPS = [
             { code: 'event:edit', name: 'Edit Operations' },
             { code: 'event:delete', name: 'Cancel Operations' },
             { code: 'event:generate_poster', name: 'Generate AI Posters' },
+            { code: 'event:generate_certificates', name: 'Generate Certificates' },
         ]
     },
     {

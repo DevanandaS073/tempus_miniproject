@@ -8,7 +8,9 @@ const {
     getRoleById,
     createRole,
     updateRole,
-    deleteRole
+    deleteRole,
+    removeUser,
+    leaveCompany
 } = require('../controllers/companyController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { requireTenant } = require('../middleware/tenantMiddleware');
@@ -47,5 +49,15 @@ router.put('/roles/:id', authenticateToken, requireTenant, requireFeature('role:
 // Route: DELETE /api/companies/roles/:id
 // Description: Permanently delete a custom role
 router.delete('/roles/:id', authenticateToken, requireTenant, requireFeature('role:delete'), deleteRole);
+
+// ─── User Management Routes ────────────────────────────────────────────────
+
+// Route: DELETE /api/companies/users/:userId
+// Description: Admin removes a user from the company
+router.delete('/users/:userId', authenticateToken, requireTenant, requireFeature('network:remove_user'), removeUser);
+
+// Route: POST /api/companies/leave
+// Description: User voluntarily leaves their company
+router.post('/leave', authenticateToken, requireTenant, leaveCompany);
 
 module.exports = router;

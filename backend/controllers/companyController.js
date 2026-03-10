@@ -52,6 +52,7 @@ exports.createCompany = async (req, res) => {
                     { code: 'event:edit', name: 'Edit Operations' },
                     { code: 'event:delete', name: 'Cancel Operations' },
                     { code: 'event:generate_poster', name: 'Generate AI Posters' },
+                    { code: 'event:generate_certificates', name: 'Generate Certificates' },
 
                     // 3. Network & Directory
                     { code: 'network:view', name: 'View Directory' },
@@ -431,5 +432,81 @@ exports.deleteRole = async (req, res) => {
     } catch (error) {
         console.error('Error deleting role:', error);
         res.status(500).json({ error: 'Failed to delete role', details: error.message });
+    }
+};
+
+// ─── DELETE /api/companies/users/:userId ────────────────────────────────────
+// Admin removes a user from the company
+exports.removeUser = async (req, res) => {
+    try {
+        const companyId = req.user.company_id;
+        const targetUserId = parseInt(req.params.userId);
+
+        if (!companyId) return res.status(403).json({ error: 'User is not part of a company' });
+
+        // Cannot remove yourself via this endpoint (use leaveCompany instead)
+        if (targetUserId === req.user.id) {
+            return res.status(400).json({ error: 'You cannot remove yourself. Use the "Leave Workspace" option instead.' });
+        }
+
+        // Verify target user belongs to the same company
+        const targetUser = await prisma.users.findFirst({
+            where: { id: targetUserId, company_id: companyId }
+        });
+
+        if (!targetUser) {
+            return res.status(404).json({ error: 'User not found in your company' });
+        }
+
+        // Detach the user: set company_id and role_id to null
+        await prisma.users.update({
+            where: { id: targetUserId },
+            data: { company_id: null, role_id: null }
+        });
+
+        res.json({ message: `User removed from the company successfully` });
+    } catch (error) {
+        console.error('Error removing user:', error);
+        res.status(500).json({ error: 'Failed to remove user' });
+    }
+};
+
+// ─── POST /api/companies/leave ──────────────────────────────────────────────
+// User voluntarily leaves their company
+exports.leaveCompany = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const companyId = req.user.company_id;
+
+        if (!companyId) {
+            return res.status(400).json({ error: 'You are not part of any company' });
+        }
+
+        // Check if user is the sole admin — prevent orphaned companies
+        if (req.user.role === 'admin') {
+            const adminCount = await prisma.users.count({
+                where: {
+                    company_id: companyId,
+                    role: { name: 'admin' }
+                }
+            });
+
+            if (adminCount <= 1) {
+                return res.status(403).json({
+                    error: 'You are the only Admin. Transfer admin rights to another user before leaving, or delete the workspace.'
+                });
+            }
+        }
+
+        // Detach the user
+        await prisma.users.update({
+            where: { id: userId },
+            data: { company_id: null, role_id: null }
+        });
+
+        res.json({ message: 'You have left the company successfully' });
+    } catch (error) {
+        console.error('Error leaving company:', error);
+        res.status(500).json({ error: 'Failed to leave company' });
     }
 };

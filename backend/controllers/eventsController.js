@@ -305,6 +305,187 @@ const getUserEvents = async (req, res) => {
     }
 };
 
+// ─── POST /api/events/:id/media/poster ──────────────────────────────────────
+// Queue a poster generation job for an event
+const generatePoster = async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id);
+        const companyId = req.user.company_id;
+
+        // Verify event belongs to this company
+        const event = await prisma.events.findFirst({
+            where: { event_id: eventId, company_id: companyId }
+        });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+
+        // Check if a poster already exists
+        const existing = await prisma.generated_posters.findFirst({
+            where: { event_id: eventId }
+        });
+        if (existing) {
+            return res.status(409).json({ error: 'A poster already exists for this event', poster: existing });
+        }
+
+        // Create a pending record in the database
+        const poster = await prisma.generated_posters.create({
+            data: {
+                event_id: eventId,
+                template_id: 1, // Default template
+                poster_path: '',
+                status: 'pending'
+            }
+        });
+
+        // Queue the job for background processing
+        const { mediaQueue } = require('../queues/mediaQueue');
+        await mediaQueue.add('generate-poster', { event_id: eventId, poster_id: poster.id });
+
+        res.status(202).json({ message: 'Poster generation queued', poster });
+    } catch (error) {
+        console.error('Generate Poster Error:', error);
+        res.status(500).json({ error: 'Failed to queue poster generation' });
+    }
+};
+
+// ─── POST /api/events/:id/media/certificates ────────────────────────────────
+// Queue certificate generation for all participants of an event
+const generateCertificates = async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id);
+        const companyId = req.user.company_id;
+
+        // Verify event belongs to this company
+        const event = await prisma.events.findFirst({
+            where: { event_id: eventId, company_id: companyId }
+        });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+
+        // Check if certificates already exist
+        const existing = await prisma.generated_certificates.count({
+            where: { event_id: eventId }
+        });
+        if (existing > 0) {
+            return res.status(409).json({ error: 'Certificates already generated for this event' });
+        }
+
+        // Queue the job for background processing
+        const { mediaQueue } = require('../queues/mediaQueue');
+        await mediaQueue.add('generate-certificates', { event_id: eventId });
+
+        res.status(202).json({ message: 'Certificate generation queued' });
+    } catch (error) {
+        console.error('Generate Certificates Error:', error);
+        res.status(500).json({ error: 'Failed to queue certificate generation' });
+    }
+};
+
+// ─── GET /api/events/:id/media ──────────────────────────────────────────────
+// Get the status and paths of all generated media for an event
+const getEventMedia = async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id);
+        const companyId = req.user.company_id;
+
+        // Verify event belongs to this company
+        const event = await prisma.events.findFirst({
+            where: { event_id: eventId, company_id: companyId }
+        });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+
+        const posters = await prisma.generated_posters.findMany({
+            where: { event_id: eventId },
+            orderBy: { generated_at: 'desc' }
+        });
+
+        const certificates = await prisma.generated_certificates.findMany({
+            where: { event_id: eventId },
+            include: {
+                participant: {
+                    include: {
+                        user: { select: { id: true, first_name: true, last_name: true, email: true } }
+                    }
+                }
+            },
+            orderBy: { generated_at: 'desc' }
+        });
+
+        res.json({
+            posters,
+            certificates,
+            has_poster: posters.length > 0,
+            has_certificates: certificates.length > 0,
+            poster_status: posters[0]?.status || null,
+            certificates_count: certificates.length
+        });
+    } catch (error) {
+        console.error('Get Event Media Error:', error);
+        res.status(500).json({ error: 'Failed to fetch event media' });
+    }
+};
+
+// ─── GET /api/events/templates/certificates ──────────────────────────────────
+// Fetch available certificate templates
+const getCertificateTemplates = async (req, res) => {
+    try {
+        const templates = await prisma.certificate_templates.findMany({
+            where: { is_active: true },
+            orderBy: { name: 'asc' }
+        });
+        res.json(templates);
+    } catch (error) {
+        console.error('Fetch Certificate Templates Error:', error);
+        res.status(500).json({ error: 'Failed to fetch templates' });
+    }
+};
+
+// ─── POST /api/events/:id/media/setup-certificates ───────────────────────────
+// Assign a template to an event and schedule automatic generation on end_date
+const setupAutoCertificates = async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id);
+        const { template_id } = req.body;
+        const companyId = req.user.company_id;
+
+        if (!template_id) return res.status(400).json({ error: 'Template ID is required' });
+
+        // Verify event exists and belongs to company
+        const event = await prisma.events.findFirst({
+            where: { event_id: eventId, company_id: companyId }
+        });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+
+        // Update event with selected template
+        await prisma.events.update({
+            where: { event_id: eventId },
+            data: { certificate_template_id: template_id }
+        });
+
+        // Calculate delay until end_date
+        const now = new Date();
+        const endDate = new Date(event.end_date);
+        const delayMs = Math.max(0, endDate.getTime() - now.getTime()); // 0 if already in the past
+
+        // Remove any previously scheduled certificate jobs for this event to avoid duplicates
+        const { mediaQueue } = require('../queues/mediaQueue');
+        const delayedJobs = await mediaQueue.getDelayed();
+        for (const job of delayedJobs) {
+            if (job.name === 'generate-certificates' && job.data?.event_id === eventId) {
+                await job.remove();
+                console.log(`Removed previous delayed certificate job for event ${eventId}`);
+            }
+        }
+
+        // Schedule new delayed job
+        await mediaQueue.add('generate-certificates', { event_id: eventId }, { delay: delayMs });
+        console.log(`Scheduled certificate generation for event ${eventId} in ${Math.floor(delayMs / 1000)} seconds.`);
+
+        res.json({ message: 'Auto-certificates configured and scheduled successfully' });
+    } catch (error) {
+        console.error('Setup Auto-Certificates Error:', error);
+        res.status(500).json({ error: 'Failed to setup automated certificates' });
+    }
+};
+
 module.exports = {
     getEvents,
     createEvent,
@@ -313,5 +494,10 @@ module.exports = {
     joinEvent,
     leaveEvent,
     getEventParticipants,
-    getUserEvents
+    getUserEvents,
+    generatePoster,
+    generateCertificates,
+    getEventMedia,
+    getCertificateTemplates,
+    setupAutoCertificates
 };

@@ -23,4 +23,11 @@ router.delete('/:id/join', requireFeature('event:join'), eventsController.leaveE
 // ─── Event Participants ─────────────────────────────────────────────────────
 router.get('/:id/participants', requireFeature('event:view'), eventsController.getEventParticipants);
 
+// ─── Media Generation (Posters & Certificates) ─────────────────────────────
+router.get('/:id/media', requireFeature('event:view'), eventsController.getEventMedia);
+router.post('/:id/media/poster', requireFeature('event:generate_poster'), eventsController.generatePoster);
+router.post('/:id/media/certificates', requireFeature('event:create'), eventsController.generateCertificates);
+router.get('/templates/certificates', requireFeature('event:create'), eventsController.getCertificateTemplates);
+router.post('/:id/media/setup-certificates', requireFeature('event:create'), eventsController.setupAutoCertificates);
+
 module.exports = router;

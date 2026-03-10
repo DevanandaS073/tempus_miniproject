@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function EventCard({ event, onRefresh, onEdit }) {
@@ -9,12 +10,106 @@ export default function EventCard({ event, onRefresh, onEdit }) {
     const canJoin = hasFeature('event:join');
     const canEdit = hasFeature('event:edit');
     const canDelete = hasFeature('event:delete');
+    const canGeneratePoster = hasFeature('event:generate_poster');
+    const canGenerateCertificates = hasFeature('event:generate_certificates');
+    const navigate = useNavigate();
+
+    const [media, setMedia] = useState(null);
+    const [mediaLoading, setMediaLoading] = useState(false);
+    const [templates, setTemplates] = useState([]);
+    const [showTemplateSelect, setShowTemplateSelect] = useState(false);
 
     const startDate = new Date(event.start_date);
     const endDate = new Date(event.end_date);
 
     const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const isPastEvent = endDate < new Date();
+
+    // Fetch media status on mount
+    useEffect(() => {
+        fetchMedia();
+    }, []);
+
+    const fetchMedia = async () => {
+        try {
+            const [mediaRes, templatesRes] = await Promise.all([
+                fetch(`/api/events/${event.event_id}/media`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                fetch('/api/events/templates/certificates', {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            ]);
+
+            if (mediaRes.ok) setMedia(await mediaRes.json());
+            if (templatesRes.ok) setTemplates(await templatesRes.json());
+        } catch (err) {
+            console.error('Failed to fetch media/templates:', err);
+        }
+    };
+
+    const handleGeneratePoster = async () => {
+        setMediaLoading(true);
+        try {
+            const res = await fetch(`/api/events/${event.event_id}/media/poster`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+            fetchMedia();
+        } catch (err) {
+            console.error(err.message);
+        } finally {
+            setMediaLoading(false);
+        }
+    };
+
+    const handleGenerateCertificates = async () => {
+        setMediaLoading(true);
+        try {
+            const res = await fetch(`/api/events/${event.event_id}/media/certificates`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+            fetchMedia();
+        } catch (err) {
+            console.error(err.message);
+        } finally {
+            setMediaLoading(false);
+        }
+    };
+
+    const handleSetupAutoCertificates = async (templateId) => {
+        setMediaLoading(true);
+        try {
+            const res = await fetch(`/api/events/${event.event_id}/media/setup-certificates`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ template_id: templateId })
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+            fetchMedia();
+            setShowTemplateSelect(false);
+        } catch (err) {
+            console.error(err.message);
+        } finally {
+            setMediaLoading(false);
+        }
+    };
 
     // ─── Join Event ─────────────────────────────────────────────────────────
     const handleJoin = async () => {
@@ -110,6 +205,102 @@ export default function EventCard({ event, onRefresh, onEdit }) {
             {event.creator && (
                 <div className="text-[10px] text-zinc-600 font-mono">
                     Created by {event.creator.first_name} {event.creator.last_name}
+                </div>
+            )}
+
+            {/* Media Actions */}
+            {media && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800/50">
+                    {/* Poster */}
+                    {canGeneratePoster && !media.has_poster && (
+                        <button
+                            onClick={handleGeneratePoster}
+                            disabled={mediaLoading}
+                            className="px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold tracking-wider uppercase
+                                       hover:bg-purple-500/20 transition-colors disabled:opacity-50"
+                        >
+                            {mediaLoading ? '...' : 'Generate Poster'}
+                        </button>
+                    )}
+                    {media.has_poster && (
+                        <button
+                            onClick={() => {
+                                const params = new URLSearchParams({
+                                    title: event.title || '',
+                                    date: event.start_date || '',
+                                    location: event.location || '',
+                                    description: event.description || ''
+                                });
+                                navigate(`/poster-gen?${params.toString()}`);
+                            }}
+                            className="px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold tracking-wider uppercase
+                                       hover:bg-purple-500/20 transition-colors"
+                        >
+                            View Poster
+                        </button>
+                    )}
+
+                    {/* Certificates (Past Event) */}
+                    {isPastEvent && canGenerateCertificates && !media.has_certificates && (
+                        <button
+                            onClick={handleGenerateCertificates}
+                            disabled={mediaLoading}
+                            className="px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold tracking-wider uppercase
+                                       hover:bg-amber-500/20 transition-colors disabled:opacity-50"
+                        >
+                            {mediaLoading ? '...' : 'Generate Certificates'}
+                        </button>
+                    )}
+
+                    {/* Auto-Certificates Setup (Future Event) */}
+                    {!isPastEvent && canGenerateCertificates && !media.has_certificates && (
+                        <div className="relative">
+                            {event.certificate_template_id ? (
+                                <button
+                                    onClick={() => setShowTemplateSelect(!showTemplateSelect)}
+                                    disabled={mediaLoading}
+                                    className="px-3 py-1.5 bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] font-bold tracking-wider uppercase
+                                               hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                                >
+                                    ✔ Auto-Cert scheduled
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setShowTemplateSelect(!showTemplateSelect)}
+                                    disabled={mediaLoading}
+                                    className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold tracking-wider uppercase
+                                               hover:bg-blue-500/20 transition-colors disabled:opacity-50"
+                                >
+                                    Setup Auto-Certificates
+                                </button>
+                            )}
+
+                            {showTemplateSelect && (
+                                <div className="absolute top-full left-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 shadow-xl z-20">
+                                    <div className="p-2 border-b border-zinc-800 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                                        Select Template
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto">
+                                        {templates.map(t => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => handleSetupAutoCertificates(t.id)}
+                                                className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-blue-500/20 hover:text-blue-400 transition-colors"
+                                            >
+                                                {t.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {media.has_certificates && (
+                        <span className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold tracking-wider uppercase">
+                            {media.certificates_count} Certificates
+                        </span>
+                    )}
                 </div>
             )}
 

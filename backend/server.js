@@ -66,3 +66,5 @@ app.listen(PORT, () => {
     console.log(`- Calendar: http://localhost:${PORT}/calendar`);
     console.log(`- Poster Generator: http://localhost:${PORT}/poster-gen`);
 });
+
+// Trigger nodemon restart for new Prisma client (Auto-Certificates fix)

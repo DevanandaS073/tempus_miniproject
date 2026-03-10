@@ -179,7 +179,8 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
                             <i className="fas fa-check text-green-400 text-2xl" />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-1">Event Created!</h3>
-                        <p className="text-zinc-400 text-sm mb-6">{createdEvent?.title}</p>
+                        <p className="text-zinc-400 text-sm mb-2">{createdEvent?.title}</p>
+                        <p className="text-zinc-600 text-xs mb-6">You can generate posters and certificates anytime from the Operations page.</p>
 
                         <div className="flex gap-3 justify-center">
                             <button
@@ -197,16 +198,12 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
                                 <i className="fas fa-image mr-2" />Create Poster
                             </button>
                             <button
-                                onClick={() => alert('Certificate generation coming soon!')}
+                                onClick={handleClose}
                                 className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-none text-sm font-medium transition-colors"
                             >
-                                <i className="fas fa-certificate mr-2" />Generate Certificate
+                                Done
                             </button>
                         </div>
-
-                        <button onClick={handleClose} className="text-zinc-400 hover:text-white text-sm mt-4 transition-colors">
-                            Done
-                        </button>
                     </div>
                 )}
             </div>

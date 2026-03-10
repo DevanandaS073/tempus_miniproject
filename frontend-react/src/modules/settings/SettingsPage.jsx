@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function SettingsPage() {
-    const { user, token, hasFeature } = useAuth();
+    const { user, token, hasFeature, logout } = useAuth();
+    const navigate = useNavigate();
     const [companyInfo, setCompanyInfo] = useState({ name: '', subdomain: '' });
     const [profileInfo, setProfileInfo] = useState({ first_name: '', last_name: '', email: '' });
 
@@ -105,6 +107,24 @@ export default function SettingsPage() {
             setCompanyMessage({ type: 'error', text: 'Error connecting to server' });
         } finally {
             setCompanyLoading(false);
+        }
+    };
+
+    const handleLeaveCompany = async () => {
+        if (!window.confirm('Are you sure you want to leave this workspace? You will lose access to all company data.')) return;
+        if (!window.confirm('This action is IRREVERSIBLE. Are you absolutely sure?')) return;
+
+        try {
+            const res = await fetch('/api/companies/leave', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to leave company');
+            logout();
+            navigate('/', { replace: true });
+        } catch (err) {
+            setCompanyMessage({ type: 'error', text: err.message });
         }
     };
 
@@ -229,6 +249,23 @@ export default function SettingsPage() {
                 </div>
 
             </div>
+
+            {/* ─── Danger Zone: Leave Workspace ──────────────────────── */}
+            <div className="mt-12 bg-red-950/20 border border-red-900/30 p-6 rounded-none">
+                <h2 className="text-lg font-bold text-red-400 uppercase tracking-widest mb-2">
+                    Danger Zone
+                </h2>
+                <p className="text-zinc-400 text-sm mb-6">
+                    Leaving the workspace will immediately revoke your access to all company data, events, and meetings. This action cannot be undone.
+                </p>
+                <button
+                    onClick={handleLeaveCompany}
+                    className="bg-red-900/30 text-red-400 hover:bg-red-900/60 hover:text-red-300 border border-red-900/50 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-colors"
+                >
+                    Leave Workspace
+                </button>
+            </div>
+
         </div>
     );
 }
