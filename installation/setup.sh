@@ -56,8 +56,10 @@ else
   echo "[>] Skipping .env creation."
 fi
 
-echo -e "\n[3/4] Pushing Database Schema..."
+echo -e "\n[3/4] Pushing Database Schema & Generating Client..."
 npx prisma db push
+npx prisma generate
+node prisma/seed.js
 
 echo -e "\n[4/4] Installing Frontend Dependencies..."
 cd ../frontend-react || exit

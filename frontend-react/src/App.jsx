@@ -7,6 +7,7 @@ import PosterGenPage from './modules/poster/PosterGenPage'
 import FreeAgentPage from './modules/onboarding/FreeAgentPage'
 import NetworkPage from './modules/network/NetworkPage'
 import OperationsPage from './modules/operations/OperationsPage'
+import ReportsPage from './modules/reports/ReportsPage'
 import SettingsPage from './modules/settings/SettingsPage'
 import RoleList from './modules/settings/RoleList'
 import RoleBuilder from './modules/settings/RoleBuilder'
@@ -42,9 +43,7 @@ function App() {
 
         <Route path="/reports" element={
           <FeatureRoute requiredFeature="reports:personal">
-            <div className="flex items-center justify-center p-20">
-              <h1 className="text-zinc-600 font-mono text-xl tracking-widest uppercase">Analytics Engine (Coming Soon)</h1>
-            </div>
+            <ReportsPage />
           </FeatureRoute>
         } />
 

@@ -80,6 +80,41 @@ model users {
   meeting_participations meeting_participants[]
   event_participations   event_participants[]
   notifications          notifications[]
+  reports                user_reports[]
+}
+
+model user_reports {
+  report_id              Int      @id @default(autoincrement())
+  user_id                Int
+  generated_at           DateTime @default(now()) @db.Timestamp(6)
+
+  // Core metrics — current 30 days
+  events_created         Int      @default(0)
+  events_joined          Int      @default(0)
+  meetings_scheduled     Int      @default(0)
+  meetings_attended      Int      @default(0)
+  time_invested_minutes  Int      @default(0)
+  engagement_rate_pct    Float    @default(0)
+
+  // Breakdown
+  top_event_types        Json     @default("[]")
+
+  // Month-over-Month comparison (prev 30 days)
+  prev_events_created    Int      @default(0)
+  prev_events_joined     Int      @default(0)
+  prev_meetings_scheduled Int     @default(0)
+  prev_meetings_attended Int      @default(0)
+  prev_time_invested_minutes Int  @default(0)
+
+  // MoM percentage changes
+  mom_events_pct         Float    @default(0)
+  mom_meetings_pct       Float    @default(0)
+  mom_time_pct           Float    @default(0)
+
+  user                   users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([generated_at])
 }
 
 model calendars {

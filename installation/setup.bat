@@ -49,8 +49,10 @@ echo [^>] Skipping .env creation.
 
 :end_env
 echo.
-echo [3/4] Pushing Database Schema...
+echo [3/4] Pushing Database Schema ^& Generating Client...
 call npx prisma db push
+call npx prisma generate
+node prisma\seed.js
 
 echo.
 echo [4/4] Installing Frontend Dependencies...
