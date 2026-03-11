@@ -57,10 +57,27 @@
             position: relative;
             overflow: hidden;
             background: var(--bg-grad);
+            background-size: cover;
+            background-position: center;
             color: var(--text-main);
             display: flex;
             flex-direction: column;
             padding: 60px;
+        }
+
+        /* Dark overlay when a background image is applied — keeps text readable */
+        .poster-container.has-bg-image::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.58);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* When a bg image is set, tone down the blobs so they blend softly */
+        .poster-container.has-bg-image .blob {
+            opacity: 0.15;
         }
 
         /* ========================
@@ -187,8 +204,43 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            /* Center vertically */
             gap: 40px;
+        }
+
+        /* ========================
+           LOGO & ORG NAME ZONE
+           ======================== */
+
+        .logo-zone {
+            display: none; /* hidden until assets are provided */
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-zone.visible {
+            display: flex;
+        }
+
+        .logo-img {
+            max-height: 80px;
+            max-width: 200px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 16px rgba(255,255,255,0.3));
+        }
+
+        .org-name {
+            font-family: var(--font-body);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            font-weight: 600;
+            color: var(--accent-1);
+            opacity: 0.9;
+        }
+
+        .org-name:empty {
+            display: none;
         }
 
         /* HERO SECTION */
@@ -362,6 +414,12 @@
         <div class="blob blob-3"></div>
 
         <div class="content-layer">
+
+            <!-- Logo & Org Name (shown only when assets are provided) -->
+            <div class="logo-zone" id="logo-zone">
+                <img class="logo-img" id="logo-img" src="" alt="Organisation Logo">
+                <div class="org-name" id="org-name-display"></div>
+            </div>
 
             <!-- Hero -->
             <div class="hero-section" data-zone="hero">

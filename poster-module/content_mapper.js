@@ -92,7 +92,7 @@ class ContentMapper {
     normalizeEventData(eventData) {
         return {
             title: (eventData.title || '').trim(),
-            subtitle: (eventData.subtitle || '').trim(),  // New: subtitle support
+            subtitle: (eventData.subtitle || '').trim(),
             date: (eventData.date || '').trim(),
             time: (eventData.time || '').trim(),
             location: (eventData.location || '').trim(),
@@ -100,8 +100,12 @@ class ContentMapper {
             website: (eventData.website || '').trim(),
             contact: (eventData.contact || '').trim(),
             hashtag: (eventData.hashtag || '').trim(),
-            cta_text: (eventData.cta_text || eventData.ctaText || 'Register Now').trim(),  // New: CTA support with default
-            theme: (eventData.theme || 'default').trim().toLowerCase()  // New: Theme support with default
+            cta_text: (eventData.cta_text || eventData.ctaText || 'Register Now').trim(),
+            theme: (eventData.theme || 'default').trim().toLowerCase(),
+            // New asset fields
+            backgroundImage: eventData.backgroundImage || null,
+            logoUrl: eventData.logoUrl || null,
+            orgName: (eventData.orgName || '').trim()
         };
     }
 
@@ -119,34 +123,25 @@ class ContentMapper {
      */
     mapToZones(eventData) {
         return {
-            // v2.0.0: title → hero
             hero: eventData.title,
-
-            // v2.0.0: New subtitle zone (optional)
             subtitle: eventData.subtitle || null,
-
-            // v2.0.0: meta → info-card (structured object)
             meta: {
                 date: eventData.date || null,
                 time: eventData.time || null,
                 location: eventData.location || null
             },
-
-            // v2.0.0: body remains similar but renamed internally
             body: eventData.description,
-
-            // v2.0.0: New CTA zone with default fallback
             cta: eventData.cta_text,
-
-            // v2.0.0: footer remains unchanged
             footer: {
                 website: eventData.website,
                 contact: eventData.contact,
                 hashtag: eventData.hashtag
             },
-
-            // v2.0.0: Theme selection (optional)
-            theme: eventData.theme
+            theme: eventData.theme,
+            // Asset fields
+            backgroundImage: eventData.backgroundImage || null,
+            logoUrl: eventData.logoUrl || null,
+            orgName: eventData.orgName || ''
         };
     }
 
@@ -306,7 +301,6 @@ class ContentMapper {
      */
     generateRenderSafeContent(mappedContent, optimized) {
         return {
-            // Zone content (schema v2.0.0)
             zones: {
                 // v2.0.0: title → hero
                 hero: {
@@ -342,15 +336,17 @@ class ContentMapper {
                     content: mappedContent.cta,
                     defaultText: 'Register Now'
                 },
-                // v2.0.0: footer (unchanged)
                 footer: {
                     type: 'list',
                     items: this.extractFooterItems(mappedContent.footer),
                     maxItems: 3
-                }
+                },
+                // Asset zones
+                backgroundImage: mappedContent.backgroundImage || null,
+                logoUrl: mappedContent.logoUrl || null,
+                orgName: mappedContent.orgName || ''
             },
 
-            // Applied design rules
             design: {
                 colors: optimized.colors,
                 typography: {
