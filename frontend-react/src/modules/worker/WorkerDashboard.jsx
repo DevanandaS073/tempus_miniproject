@@ -21,7 +21,7 @@ export default function WorkerDashboard() {
         try {
             const [meetingsRes, eventsRes] = await Promise.all([
                 fetch('/api/calendar/meetings', { headers: { Authorization: `Bearer ${token}` } }),
-                fetch('/api/events'),
+                fetch('/api/events', { headers: { Authorization: `Bearer ${token}` } }),
             ])
             const meetings = await meetingsRes.json()
             const events = await eventsRes.json()
@@ -47,10 +47,13 @@ export default function WorkerDashboard() {
                 location: e.location || '',
                 date: new Date(e.start_date),
                 endDate: new Date(e.end_date),
+                isJoined: e.isJoined,
                 status: 'upcoming'
             }))
 
-            const detectedCollisions = detectCollisions(mappedMeetings, mappedEvents)
+            // Only check collisions for events the user has actually joined
+            const joinedEvents = mappedEvents.filter(e => e.isJoined)
+            const detectedCollisions = detectCollisions(mappedMeetings, joinedEvents)
 
             setData(prev => ({
                 ...prev,

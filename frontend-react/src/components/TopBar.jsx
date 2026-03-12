@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,46 +10,56 @@ export default function TopBar({ showLogo = false }) {
     // Notification State
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
-    const [loadingNotifs, setLoadingNotifs] = useState(false);
     const [isAccepting, setIsAccepting] = useState(false);
+    const [downloadingId, setDownloadingId] = useState(null);
+    const [downloadError, setDownloadError] = useState(null);
 
-    useEffect(() => {
+    const token = () => localStorage.getItem('tempus_token');
+
+    const fetchNotifications = useCallback(async () => {
         if (!user) return;
-        fetchNotifications();
-    }, [user]);
-
-    const fetchNotifications = async () => {
         try {
-            const token = localStorage.getItem('tempus_token');
             const res = await fetch('/api/notifications', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${token()}` }
             });
-            if (res.ok) {
-                const data = await res.json();
-                setNotifications(data);
-            }
+            if (res.ok) setNotifications(await res.json());
         } catch (err) {
             console.error("Failed to fetch notifications", err);
         }
+    }, [user]);
+
+    // Poll every 8 s; also fire immediately when the panel opens
+    useEffect(() => {
+        fetchNotifications();
+        const id = setInterval(fetchNotifications, 8000);
+        return () => clearInterval(id);
+    }, [fetchNotifications]);
+
+    useEffect(() => {
+        if (notificationsOpen) fetchNotifications();
+    }, [notificationsOpen, fetchNotifications]);
+
+    // --- handlers ---
+
+    const handleDelete = (id) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        fetch(`/api/notifications/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token()}` }
+        }).catch(err => console.error('Failed to delete notification', err));
     };
 
     const handleAcceptInvite = async (notificationId) => {
         setIsAccepting(true);
         try {
-            const token = localStorage.getItem('tempus_token');
             const res = await fetch(`/api/invites/accept/${notificationId}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${token()}` }
             });
             const data = await res.json();
-
             if (!res.ok) throw new Error(data.error || 'Failed to accept invite');
-
-            // The backend returns a brand new JWT with the new company and role attached
             updateSession(data.token, data.user);
             setNotificationsOpen(false);
-
-            // Send them to the main dashboard now that they are attached
             navigate('/dashboard', { replace: true });
         } catch (err) {
             alert(err.message);
@@ -60,18 +70,46 @@ export default function TopBar({ showLogo = false }) {
 
     const handleDeclineInvite = async (notificationId) => {
         try {
-            const token = localStorage.getItem('tempus_token');
             const res = await fetch(`/api/invites/decline/${notificationId}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${token()}` }
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to decline invite');
-
-            // Remove it from local state immediately to feel snappy
             setNotifications(prev => prev.filter(n => n.id !== notificationId));
         } catch (err) {
             alert(err.message);
+        }
+    };
+
+    const handleDownloadCert = async (n) => {
+        setDownloadingId(n.id);
+        setDownloadError(null);
+        try {
+            const res = await fetch(n.link, {
+                headers: { 'Authorization': `Bearer ${token()}` }
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || `Server error ${res.status}`);
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const cd = res.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename="?([^"]+)"?/);
+            a.download = match ? match[1] : 'certificate.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            handleDelete(n.id); // auto-dismiss after download
+        } catch (err) {
+            console.error('Certificate download error:', err);
+            setDownloadError({ id: n.id, msg: err.message });
+        } finally {
+            setDownloadingId(null);
         }
     };
 
@@ -82,7 +120,6 @@ export default function TopBar({ showLogo = false }) {
 
     return (
         <header className="w-full h-16 bg-slate-950/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 z-20 rounded-none shrink-0 sticky top-0">
-            {/* Left side empty on Desktop because Sidebar has the Logo. Useful for mobile hamburger later */}
             <div className="flex-1">
                 {showLogo && (
                     <div className="font-bold text-2xl tracking-[0.2em] text-white">TEMPUS</div>
@@ -90,10 +127,10 @@ export default function TopBar({ showLogo = false }) {
             </div>
 
             <div className="flex items-center gap-6">
-                {/* Notifications Dropdown */}
+                {/* Notifications */}
                 <div className="relative">
                     <button
-                        onClick={() => { setNotificationsOpen(!notificationsOpen); setMenuOpen(false); }}
+                        onClick={() => { setNotificationsOpen(v => !v); setMenuOpen(false); }}
                         className="text-slate-400 hover:text-white transition-colors flex items-center gap-2 relative"
                         title="Notifications"
                     >
@@ -111,7 +148,12 @@ export default function TopBar({ showLogo = false }) {
                     {notificationsOpen && (
                         <div className="absolute right-0 mt-4 w-80 bg-slate-900 border border-slate-700 shadow-2xl z-[60] flex flex-col">
                             <div className="p-3 border-b border-slate-800 bg-slate-950/50">
-                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Notifications</h3>
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                                    Notifications
+                                    {notifications.length > 0 && (
+                                        <span className="ml-2 text-xs font-normal text-slate-400">({notifications.length})</span>
+                                    )}
+                                </h3>
                             </div>
 
                             <div className="max-h-96 overflow-y-auto">
@@ -121,16 +163,35 @@ export default function TopBar({ showLogo = false }) {
                                     notifications.map(n => (
                                         <div key={n.id} className="p-4 border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
                                             <div className="flex items-start gap-3">
-                                                <div className="mt-1">
-                                                    {n.type === 'INVITE' ? '✉️' : '🔔'}
+                                                <div className="mt-1 text-base shrink-0">
+                                                    {n.type === 'INVITE' ? '✉️'
+                                                        : n.type === 'certificate_issued' ? '🎓'
+                                                        : '🔔'}
                                                 </div>
-                                                <div className="flex-1">
-                                                    <h4 className="text-sm font-semibold text-slate-200">{n.title}</h4>
-                                                    <p className="text-xs text-slate-400 mt-1 leading-snug">{n.message}</p>
+                                                <div className="flex-1 min-w-0">
+                                                    {/* Title row with × button */}
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <h4 className="text-sm font-semibold text-slate-200 leading-snug">{n.title}</h4>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(n.id); }}
+                                                            title="Dismiss"
+                                                            className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-slate-700 hover:bg-red-500 border border-slate-600 hover:border-red-400 text-slate-400 hover:text-white transition-colors flex items-center justify-center text-xs leading-none"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
 
+                                                    <p className="text-xs text-slate-400 mt-1 leading-snug">{n.message}</p>
+                                                    <p className="text-[10px] text-slate-600 mt-1">
+                                                        {new Date(n.created_at).toLocaleString()}
+                                                    </p>
+
+                                                    {/* INVITE actions */}
                                                     {n.type === 'INVITE' && (
                                                         <div className="mt-3 flex gap-2">
                                                             <button
+                                                                type="button"
                                                                 onClick={() => handleAcceptInvite(n.id)}
                                                                 disabled={isAccepting}
                                                                 className="flex-1 bg-white text-black hover:bg-slate-200 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50"
@@ -138,11 +199,33 @@ export default function TopBar({ showLogo = false }) {
                                                                 {isAccepting ? '...' : 'Accept'}
                                                             </button>
                                                             <button
+                                                                type="button"
                                                                 onClick={() => handleDeclineInvite(n.id)}
-                                                                className="flex-1 border border-slate-600 text-slate-300 hover:bg-slate-800 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors disabled:opacity-50"
+                                                                className="flex-1 border border-slate-600 text-slate-300 hover:bg-slate-800 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors"
                                                             >
                                                                 Decline
                                                             </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Certificate download */}
+                                                    {n.type === 'certificate_issued' && n.link && (
+                                                        <div className="mt-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); handleDownloadCert(n); }}
+                                                                disabled={downloadingId === n.id}
+                                                                className="w-full bg-violet-700 hover:bg-violet-600 disabled:bg-violet-900 text-white py-1.5 text-xs font-bold uppercase tracking-wide transition-colors flex items-center justify-center gap-2"
+                                                            >
+                                                                {downloadingId === n.id ? (
+                                                                    <><span className="animate-spin">⟳</span> Downloading…</>
+                                                                ) : (
+                                                                    <>⬇ Download Certificate</>
+                                                                )}
+                                                            </button>
+                                                            {downloadError?.id === n.id && (
+                                                                <p className="text-[10px] text-red-400 mt-1">⚠ {downloadError.msg}</p>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -172,3 +255,4 @@ export default function TopBar({ showLogo = false }) {
         </header>
     );
 }
+    

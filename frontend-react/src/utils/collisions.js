@@ -48,7 +48,7 @@ export function detectCollisions(meetings, events) {
         }
     }
 
-    // Check for M vs M overlaps (nice to have)
+    // Check for M vs M overlaps
     for (let i = 0; i < mBlocks.length; i++) {
         for (let j = i + 1; j < mBlocks.length; j++) {
             const m1 = mBlocks[i]
@@ -59,6 +59,24 @@ export function detectCollisions(meetings, events) {
                     id: collisionId++,
                     meeting1: m1.title,
                     meeting2: m2.title,
+                    time: `Conflict around ${overlapTime}`
+                })
+            }
+        }
+    }
+
+    // Check for E vs E overlaps (joined events that clash with each other)
+    for (let i = 0; i < eBlocks.length; i++) {
+        for (let j = i + 1; j < eBlocks.length; j++) {
+            const e1 = eBlocks[i]
+            const e2 = eBlocks[j]
+            if (isNaN(e1.start) || isNaN(e1.end) || isNaN(e2.start) || isNaN(e2.end)) continue
+            if (e1.start < e2.end && e1.end > e2.start) {
+                const overlapTime = new Date(Math.max(e1.start, e2.start)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                collisions.push({
+                    id: collisionId++,
+                    meeting1: e1.title,
+                    meeting2: e2.title,
                     time: `Conflict around ${overlapTime}`
                 })
             }

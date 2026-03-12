@@ -10,8 +10,9 @@ const EVENT_TYPES = ['conference', 'workshop', 'seminar', 'social', 'training', 
 export default function EventModal({ isOpen, onClose, onCreated }) {
     const { token } = useAuth()
     const navigate = useNavigate()
-    const [step, setStep] = useState('form') // form | success
+    const [step, setStep] = useState('form') // form | conflict | success
     const [createdEvent, setCreatedEvent] = useState(null)
+    const [conflictInfo, setConflictInfo] = useState(null) // { title, start, end }
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -59,12 +60,8 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
 
             if (res.status === 409) {
                 const data = await res.json()
-                const confirmed = window.confirm(
-                    `⚠️ Scheduling Conflict\n\n${data.message || 'This event conflicts with an existing event.'}\n\nDo you want to create this event anyway?`
-                )
-                if (confirmed) {
-                    await submitEvent(true)
-                }
+                setConflictInfo(data.conflictWith || { title: data.error || 'an existing event' })
+                setStep('conflict')
                 return
             }
 
@@ -92,6 +89,7 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
     const handleClose = () => {
         setStep('form')
         setCreatedEvent(null)
+        setConflictInfo(null)
         setForm({
             title: '', description: '', event_type: 'conference',
             start_date: now.toISOString().slice(0, 16),
@@ -105,6 +103,46 @@ export default function EventModal({ isOpen, onClose, onCreated }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={handleClose}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div className="glass-card p-6 w-full max-w-lg relative z-10" onClick={e => e.stopPropagation()}>
+                {step === 'conflict' && conflictInfo && (
+                    <>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-amber-400">
+                                <i className="fas fa-triangle-exclamation mr-2" />Schedule Conflict
+                            </h3>
+                            <button onClick={handleClose} className="text-zinc-400 hover:text-white">
+                                <i className="fas fa-times" />
+                            </button>
+                        </div>
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-none p-4 mb-5">
+                            <p className="text-amber-200 text-sm mb-1">
+                                This event overlaps with an existing event:
+                            </p>
+                            <p className="text-white font-semibold text-base mb-1">&ldquo;{conflictInfo.title}&rdquo;</p>
+                            {conflictInfo.start && (
+                                <p className="text-zinc-400 text-xs">
+                                    {new Date(conflictInfo.start).toLocaleString()} &ndash; {new Date(conflictInfo.end).toLocaleString()}
+                                </p>
+                            )}
+                        </div>
+                        <p className="text-zinc-400 text-sm mb-5">Do you want to create this event anyway?</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => submitEvent(true)}
+                                disabled={loading}
+                                className="flex-1 bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-none font-medium transition-colors disabled:opacity-50"
+                            >
+                                {loading ? 'Creating...' : 'Create Anyway'}
+                            </button>
+                            <button
+                                onClick={() => { setStep('form'); setConflictInfo(null); }}
+                                className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-none font-medium transition-colors"
+                            >
+                                Go Back
+                            </button>
+                        </div>
+                    </>
+                )}
+
                 {step === 'form' && (
                     <>
                         <div className="flex justify-between items-center mb-4">

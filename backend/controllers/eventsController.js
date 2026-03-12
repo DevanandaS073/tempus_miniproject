@@ -111,6 +111,30 @@ const createEvent = async (req, res) => {
     }
 };
 
+// ─── GET /api/events/:id ────────────────────────────────────────────────────
+// Get a single event by ID (tenant-isolated)
+const getEvent = async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id);
+        const companyId = req.user.company_id;
+
+        const event = await prisma.events.findFirst({
+            where: { event_id: eventId, company_id: companyId },
+            include: {
+                creator: { select: { first_name: true, last_name: true } },
+                company: { select: { name: true } }
+            }
+        });
+
+        if (!event) return res.status(404).json({ error: 'Event not found in your workspace' });
+
+        res.json(event);
+    } catch (error) {
+        console.error('GET Event Error:', error);
+        res.status(500).json({ error: 'Failed to fetch event' });
+    }
+};
+
 // ─── PUT /api/events/:id ────────────────────────────────────────────────────
 // Update an existing event (tenant-isolated)
 const updateEvent = async (req, res) => {
@@ -179,12 +203,42 @@ const joinEvent = async (req, res) => {
         const eventId = parseInt(req.params.id);
         const userId = req.user.id;
         const companyId = req.user.company_id;
+        const force = req.query.force === 'true';
 
         // Tenant isolation: Verify event belongs to user's company
         const event = await prisma.events.findFirst({
             where: { event_id: eventId, company_id: companyId }
         });
         if (!event) return res.status(404).json({ error: 'Event not found in your workspace' });
+
+        // Block joining events that have already ended
+        if (new Date(event.end_date) < new Date()) {
+            return res.status(400).json({ error: 'This event has already ended and can no longer be joined.' });
+        }
+
+        // Collision check against already-joined events (unless force=true)
+        if (!force) {
+            const joinedParticipations = await prisma.event_participants.findMany({
+                where: { user_id: userId },
+                include: { event: { select: { event_id: true, title: true, start_date: true, end_date: true } } }
+            });
+
+            const overlapping = joinedParticipations
+                .map(p => p.event)
+                .filter(e => e.event_id !== eventId)
+                .find(e => new Date(e.start_date) < new Date(event.end_date) && new Date(e.end_date) > new Date(event.start_date));
+
+            if (overlapping) {
+                return res.status(409).json({
+                    error: `Schedule collision`,
+                    collision: {
+                        title: overlapping.title,
+                        start: overlapping.start_date,
+                        end: overlapping.end_date
+                    }
+                });
+            }
+        }
 
         // Ensure user has a calendar
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
@@ -336,11 +390,9 @@ const generatePoster = async (req, res) => {
             }
         });
 
-        // Queue the job for background processing
-        const { mediaQueue } = require('../queues/mediaQueue');
-        await mediaQueue.add('generate-poster', { event_id: eventId, poster_id: poster.id });
+        // Queue the job for background processing - REMOVED for Client-Side integration
 
-        res.status(202).json({ message: 'Poster generation queued', poster });
+        res.status(202).json({ message: 'Poster generation logged (Client-side rendering pending)', poster });
     } catch (error) {
         console.error('Generate Poster Error:', error);
         res.status(500).json({ error: 'Failed to queue poster generation' });
@@ -368,11 +420,9 @@ const generateCertificates = async (req, res) => {
             return res.status(409).json({ error: 'Certificates already generated for this event' });
         }
 
-        // Queue the job for background processing
-        const { mediaQueue } = require('../queues/mediaQueue');
-        await mediaQueue.add('generate-certificates', { event_id: eventId });
+        // Queue the job for background processing - REMOVED for Client-Side integration
 
-        res.status(202).json({ message: 'Certificate generation queued' });
+        res.status(202).json({ message: 'Certificate generation logged (Client-side rendering pending)' });
     } catch (error) {
         console.error('Generate Certificates Error:', error);
         res.status(500).json({ error: 'Failed to queue certificate generation' });
@@ -466,18 +516,11 @@ const setupAutoCertificates = async (req, res) => {
         const delayMs = Math.max(0, endDate.getTime() - now.getTime()); // 0 if already in the past
 
         // Remove any previously scheduled certificate jobs for this event to avoid duplicates
-        const { mediaQueue } = require('../queues/mediaQueue');
-        const delayedJobs = await mediaQueue.getDelayed();
-        for (const job of delayedJobs) {
-            if (job.name === 'generate-certificates' && job.data?.event_id === eventId) {
-                await job.remove();
-                console.log(`Removed previous delayed certificate job for event ${eventId}`);
-            }
-        }
-
+        // REMOVED: BullMQ removed in favor of manual client-side triggers
+        
         // Schedule new delayed job
-        await mediaQueue.add('generate-certificates', { event_id: eventId }, { delay: delayMs });
-        console.log(`Scheduled certificate generation for event ${eventId} in ${Math.floor(delayMs / 1000)} seconds.`);
+        // REMOVED: BullMQ removed in favor of manual client-side triggers
+        console.log(`Auto-certificate configuration saved for event ${eventId}.`);
 
         res.json({ message: 'Auto-certificates configured and scheduled successfully' });
     } catch (error) {
@@ -488,6 +531,7 @@ const setupAutoCertificates = async (req, res) => {
 
 module.exports = {
     getEvents,
+    getEvent,
     createEvent,
     updateEvent,
     deleteEvent,

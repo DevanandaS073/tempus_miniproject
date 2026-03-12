@@ -7,6 +7,7 @@ import PosterGenPage from './modules/poster/PosterGenPage'
 import FreeAgentPage from './modules/onboarding/FreeAgentPage'
 import NetworkPage from './modules/network/NetworkPage'
 import OperationsPage from './modules/operations/OperationsPage'
+import CertificateDashboard from './modules/operations/certificates/CertificateDashboard'
 import ReportsPage from './modules/reports/ReportsPage'
 import SettingsPage from './modules/settings/SettingsPage'
 import RoleList from './modules/settings/RoleList'
@@ -39,6 +40,10 @@ function App() {
 
         <Route path="/operations" element={
           <FeatureRoute requiredFeature="event:view"><OperationsPage /></FeatureRoute>
+        } />
+
+        <Route path="/operations/certificates" element={
+          <FeatureRoute requiredFeature="event:generate_certificates"><CertificateDashboard /></FeatureRoute>
         } />
 
         <Route path="/reports" element={

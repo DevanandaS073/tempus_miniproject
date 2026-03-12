@@ -16,10 +16,9 @@ export default function CollisionList({ collisions = [] }) {
                         <i className="fa-solid fa-triangle-exclamation" />
                     </div>
                     <div className="collision-info">
-                        <h4>{c.title || 'Schedule Conflict'}</h4>
-                        <p>{c.description || 'Two items overlap'}</p>
+                        <h4>{c.meeting1} &amp; {c.meeting2}</h4>
+                        <p>{c.time}</p>
                     </div>
-                    <button className="btn-text">Resolve</button>
                 </div>
             ))}
         </>

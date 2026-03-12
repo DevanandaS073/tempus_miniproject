@@ -1,5 +1,5 @@
 const express = require('express');
-const { getNotifications, markRead, markAllRead, clearAll } = require('../controllers/notificationsController');
+const { getNotifications, markRead, markAllRead, clearAll, deleteOne } = require('../controllers/notificationsController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -15,5 +15,6 @@ router.patch('/:id/read', markRead);
 // Advanced Notification Management
 router.patch('/read-all', markAllRead);
 router.delete('/clear', clearAll);
+router.delete('/:id', deleteOne);
 
 module.exports = router;

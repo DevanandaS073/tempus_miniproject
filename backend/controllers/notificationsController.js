@@ -77,3 +77,19 @@ exports.clearAll = async (req, res) => {
         res.status(500).json({ error: 'Failed to clear notifications' });
     }
 };
+
+exports.deleteOne = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const notificationId = parseInt(req.params.id);
+
+        await prisma.notifications.deleteMany({
+            where: { id: notificationId, user_id: userId }
+        });
+
+        res.json({ message: 'Notification deleted' });
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+        res.status(500).json({ error: 'Failed to delete notification' });
+    }
+};

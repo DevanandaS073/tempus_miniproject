@@ -122,6 +122,81 @@
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
 
+        /* File input styling */
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-dark);
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+            width: 100%;
+        }
+
+        .file-label:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .file-label.has-file {
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        .file-clear {
+            margin-left: auto;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .file-clear:hover {
+            opacity: 1;
+        }
+
+        /* ========================
+           POSTER LOGO / ORG ZONE 
+           (injected dynamically, styles defined here to avoid template cache issues)
+           ======================== */
+        .poster-logo-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .poster-logo-img {
+            max-height: 120px;
+            max-width: 220px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.3));
+        }
+
+        .poster-org-name {
+            font-family: 'Space Grotesk', 'Outfit', sans-serif;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            font-weight: 600;
+            color: var(--accent-1);
+            opacity: 0.9;
+        }
+
         .action-btn {
             background: linear-gradient(135deg, #8b5cf6, #6366f1);
             color: white;
@@ -136,21 +211,6 @@
 
         .action-btn:active {
             transform: scale(0.98);
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 14px;
-            padding: 8px 0;
-            transition: color 0.2s;
-        }
-
-        .back-link:hover {
-            color: var(--accent);
         }
 
         /* Preview Area */
@@ -180,7 +240,6 @@
     <div class="layout">
         <!-- Controls Sidebar -->
         <div class="controls">
-            <a href="/calendar" target="_parent" class="back-link">← Back to Calendar</a>
             <div class="control-group">
                 <h2>Theme Selection</h2>
                 <div class="theme-grid">
@@ -211,6 +270,36 @@
                     id="input-desc">Join visual designers and AI engineers for a deep dive into the next generation of generative interfaces. Experience the future of automated design systems.</textarea>
             </div>
 
+            <!-- Assets Section -->
+            <div class="control-group">
+                <h2>Assets</h2>
+
+                <label>Background Image</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="input-bg-image" accept="image/*" onchange="onBgImageChange(this)">
+                    <label class="file-label" for="input-bg-image" id="bg-image-label">
+                        <span>🖼️</span>
+                        <span id="bg-image-name">Choose image…</span>
+                        <span class="file-clear" id="bg-clear" style="display:none"
+                            onclick="clearBgImage(event)">✕</span>
+                    </label>
+                </div>
+
+                <label>Organisation Name</label>
+                <input type="text" id="input-org-name" placeholder="e.g. TechFest Society">
+
+                <label>Logo</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="input-logo" accept="image/*" onchange="onLogoChange(this)">
+                    <label class="file-label" for="input-logo" id="logo-label">
+                        <span>🏷️</span>
+                        <span id="logo-name">Choose logo…</span>
+                        <span class="file-clear" id="logo-clear" style="display:none"
+                            onclick="clearLogo(event)">✕</span>
+                    </label>
+                </div>
+            </div>
+
             <button class="action-btn" onclick="updatePoster()">Update Poster ⚡️</button>
             <button class="action-btn download-btn" onclick="downloadPoster()"
                 style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 12px;">Download Image
@@ -225,42 +314,151 @@
 
     <!-- Core Modules -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="/poster-gen/poster-module/validator.js"></script>
-    <script src="/poster-gen/poster-module/content_mapper.js"></script>
-    <script src="/poster-gen/poster-module/poster_renderer.js"></script>
-    <script src="/poster-gen/poster-module/js/core/template_engine.js"></script>
+    <script src="poster-module/validator.js"></script>
+    <script src="poster-module/content_mapper.js"></script>
+    <script src="poster-module/poster_renderer.js"></script>
+    <script src="poster-module/js/core/template_engine.js"></script>
     <script>
         // Ensure template assets (fonts + styles) are injected once
         const engine = new TemplateEngine();
-        engine.setBasePath('schemas', '/poster-gen/poster-module/templates/');
-        engine.setBasePath('html', '/poster-gen/poster-module/templates/');
+        engine.setBasePath('schemas', './poster-module/templates/');
+        engine.setBasePath('html', './poster-module/templates/');
     </script>
 
     <script>
         let currentTheme = 'default';
         let renderer = null;
+        let currentBgImageDataUrl = null;
+        let currentLogoDataUrl = null;
+
+        /* ---- File input helpers ---- */
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function onBgImageChange(input) {
+            if (!input.files || !input.files[0]) return;
+            currentBgImageDataUrl = await readFileAsDataUrl(input.files[0]);
+            const label = document.getElementById('bg-image-label');
+            document.getElementById('bg-image-name').textContent = input.files[0].name;
+            document.getElementById('bg-clear').style.display = '';
+            label.classList.add('has-file');
+            updatePoster();
+        }
+
+        function clearBgImage(e) {
+            e.preventDefault(); e.stopPropagation();
+            currentBgImageDataUrl = null;
+            document.getElementById('input-bg-image').value = '';
+            document.getElementById('bg-image-name').textContent = 'Choose image…';
+            document.getElementById('bg-clear').style.display = 'none';
+            document.getElementById('bg-image-label').classList.remove('has-file');
+            updatePoster();
+        }
+
+        async function onLogoChange(input) {
+            if (!input.files || !input.files[0]) return;
+            currentLogoDataUrl = await readFileAsDataUrl(input.files[0]);
+            const label = document.getElementById('logo-label');
+            document.getElementById('logo-name').textContent = input.files[0].name;
+            document.getElementById('logo-clear').style.display = '';
+            label.classList.add('has-file');
+            updatePoster();
+        }
+
+        function clearLogo(e) {
+            e.preventDefault(); e.stopPropagation();
+            currentLogoDataUrl = null;
+            document.getElementById('input-logo').value = '';
+            document.getElementById('logo-name').textContent = 'Choose logo…';
+            document.getElementById('logo-clear').style.display = 'none';
+            document.getElementById('logo-label').classList.remove('has-file');
+            updatePoster();
+        }
+
+        /* ---- Theme switcher ---- */
 
         function setTheme(theme) {
             currentTheme = theme;
-
-            // Update UI
             document.querySelectorAll('.theme-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.textContent.toLowerCase() === theme) btn.classList.add('active');
             });
-
             updatePoster();
         }
 
+        /* ---- Apply assets to rendered poster DOM ---- */
+
+        function injectLogoZone(container) {
+            const posterEl = container.querySelector('.poster-container');
+            if (!posterEl) return;
+
+            // Background image
+            if (currentBgImageDataUrl) {
+                posterEl.style.backgroundImage = `url('${currentBgImageDataUrl}')`;
+                posterEl.classList.add('has-bg-image');
+            } else {
+                posterEl.style.backgroundImage = '';
+                posterEl.classList.remove('has-bg-image');
+            }
+
+            const contentLayer = posterEl.querySelector('.content-layer');
+            if (!contentLayer) return;
+
+            // Remove any previously injected logo zone
+            const existing = contentLayer.querySelector('.poster-logo-zone');
+            if (existing) existing.remove();
+
+            const orgName = document.getElementById('input-org-name').value.trim();
+
+            // Only inject if something to show
+            if (!currentLogoDataUrl && !orgName) return;
+
+            const zone = document.createElement('div');
+            zone.className = 'poster-logo-zone';
+
+            if (currentLogoDataUrl) {
+                const img = document.createElement('img');
+                img.src = currentLogoDataUrl;
+                img.className = 'poster-logo-img';
+                img.alt = 'Organisation Logo';
+                zone.appendChild(img);
+            }
+
+            if (orgName) {
+                const nameEl = document.createElement('div');
+                nameEl.className = 'poster-org-name';
+                nameEl.textContent = orgName;
+                zone.appendChild(nameEl);
+            }
+
+            // Insert at the very top of content-layer
+            contentLayer.insertBefore(zone, contentLayer.firstChild);
+        }
+
+        /* ---- Main render ---- */
+
         async function updatePoster() {
+            // Always clear the cached HTML so we pick up any template changes
+            engine.clearCache('modern');
+
             const eventData = {
                 title: document.getElementById('input-title').value,
                 subtitle: document.getElementById('input-subtitle').value,
                 description: document.getElementById('input-desc').value,
                 date: document.getElementById('input-date').value,
-                time: "", // Merged into date for cleaner input
+                time: "",
                 location: document.getElementById('input-location').value,
-                theme: currentTheme
+                theme: currentTheme,
+                backgroundImage: currentBgImageDataUrl,
+                logoUrl: currentLogoDataUrl,
+                orgName: document.getElementById('input-org-name').value.trim()
             };
 
             // 1. Map content
@@ -276,7 +474,10 @@
                 container.innerHTML = template.html;
                 engine.render(container, content, template.schema);
 
-                // Initialize renderer
+                // 4. Apply uploaded assets
+                injectLogoZone(container);
+
+                // 5. Initialize renderer
                 renderer = new PosterRenderer();
 
             } catch (err) {
@@ -322,16 +523,8 @@
             }
         }
 
-        // Initialize — read URL params to pre-fill from event creation
-        document.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('title')) document.getElementById('input-title').value = params.get('title');
-            if (params.get('date')) document.getElementById('input-date').value = params.get('date');
-            if (params.get('location')) document.getElementById('input-location').value = params.get('location');
-            if (params.get('description')) document.getElementById('input-desc').value = params.get('description');
-            if (params.get('subtitle')) document.getElementById('input-subtitle').value = params.get('subtitle');
-            updatePoster();
-        });
+        // Initialize
+        document.addEventListener('DOMContentLoaded', updatePoster);
     </script>
 </body>
 

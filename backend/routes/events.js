@@ -12,6 +12,7 @@ router.use(requireTenant);
 // ─── Event CRUD ─────────────────────────────────────────────────────────────
 router.get('/', requireFeature('event:view'), eventsController.getEvents);
 router.get('/mine', requireFeature('event:view'), eventsController.getUserEvents);
+router.get('/:id', requireFeature('event:view'), eventsController.getEvent);
 router.post('/', requireFeature('event:create'), eventsController.createEvent);
 router.put('/:id', requireFeature('event:edit'), eventsController.updateEvent);
 router.delete('/:id', requireFeature('event:delete'), eventsController.deleteEvent);

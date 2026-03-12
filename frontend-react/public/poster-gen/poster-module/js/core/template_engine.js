@@ -58,7 +58,7 @@ class TemplateEngine {
 
         try {
             const schemaPath = `${this._basePath.schemas}template_${templateId}.schema.json`;
-            const response = await fetch(schemaPath);
+            const response = await fetch(schemaPath, { cache: 'no-store' });
 
             if (!response.ok) {
                 throw new Error(`Failed to load schema: ${response.status} ${response.statusText}`);
@@ -93,7 +93,7 @@ class TemplateEngine {
 
         try {
             const htmlPath = `${this._basePath.html}template_${templateId}.html`;
-            const response = await fetch(htmlPath);
+            const response = await fetch(htmlPath, { cache: 'no-store' });
 
             if (!response.ok) {
                 throw new Error(`Failed to load HTML: ${response.status} ${response.statusText}`);

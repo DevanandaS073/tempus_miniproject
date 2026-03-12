@@ -6,6 +6,7 @@ export default function EventCard({ event, onRefresh, onEdit }) {
     const { token, user, hasFeature } = useAuth();
     const [actionLoading, setActionLoading] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState(false);
+    const [collisionWarning, setCollisionWarning] = useState(null); // { title, start, end }
 
     const canJoin = hasFeature('event:join');
     const canEdit = hasFeature('event:edit');
@@ -112,17 +113,22 @@ export default function EventCard({ event, onRefresh, onEdit }) {
     };
 
     // ─── Join Event ─────────────────────────────────────────────────────────
-    const handleJoin = async () => {
+    const doJoin = async (force = false) => {
         setActionLoading(true);
         try {
-            const res = await fetch(`/api/events/${event.event_id}/join`, {
+            const url = `/api/events/${event.event_id}/join${force ? '?force=true' : ''}`;
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Failed to join');
+            const data = await res.json();
+            if (res.status === 409 && data.collision) {
+                // Show collision warning — let user decide
+                setCollisionWarning(data.collision);
+                return;
             }
+            if (!res.ok) throw new Error(data.error || 'Failed to join');
+            setCollisionWarning(null);
             onRefresh();
         } catch (err) {
             console.error(err.message);
@@ -130,6 +136,9 @@ export default function EventCard({ event, onRefresh, onEdit }) {
             setActionLoading(false);
         }
     };
+
+    const handleJoin = () => doJoin(false);
+    const handleJoinForce = () => doJoin(true);
 
     // ─── Leave Event ────────────────────────────────────────────────────────
     const handleLeave = async () => {
@@ -243,12 +252,11 @@ export default function EventCard({ event, onRefresh, onEdit }) {
                     {/* Certificates (Past Event) */}
                     {isPastEvent && canGenerateCertificates && !media.has_certificates && (
                         <button
-                            onClick={handleGenerateCertificates}
-                            disabled={mediaLoading}
+                            onClick={() => navigate(`/operations/certificates?eventId=${event.event_id}`)}
                             className="px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold tracking-wider uppercase
-                                       hover:bg-amber-500/20 transition-colors disabled:opacity-50"
+                                       hover:bg-amber-500/20 transition-colors"
                         >
-                            {mediaLoading ? '...' : 'Generate Certificates'}
+                            Award Certificates
                         </button>
                     )}
 
@@ -304,11 +312,38 @@ export default function EventCard({ event, onRefresh, onEdit }) {
                 </div>
             )}
 
+            {/* Collision Warning */}
+            {collisionWarning && (
+                <div className="mt-2 p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                    <p className="font-bold uppercase tracking-wide mb-1">⚠ Schedule Collision</p>
+                    <p>This event overlaps with <span className="text-white font-semibold">&ldquo;{collisionWarning.title}&rdquo;</span> you have already joined.</p>
+                    <div className="flex gap-2 mt-2">
+                        <button
+                            onClick={handleJoinForce}
+                            disabled={actionLoading}
+                            className="px-3 py-1 bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-bold uppercase tracking-wide hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                        >
+                            {actionLoading ? '...' : 'Join Anyway'}
+                        </button>
+                        <button
+                            onClick={() => setCollisionWarning(null)}
+                            className="px-3 py-1 text-zinc-400 text-xs font-bold uppercase tracking-wide hover:text-zinc-200 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex items-center gap-2 mt-1">
                 {/* Join / Leave */}
                 {canJoin && (
-                    event.isJoined ? (
+                    isPastEvent ? (
+                        <span className="flex-1 px-4 py-2 bg-zinc-800/50 text-zinc-600 text-xs font-bold tracking-wider uppercase text-center">
+                            Event Ended
+                        </span>
+                    ) : event.isJoined ? (
                         <button
                             onClick={handleLeave}
                             disabled={actionLoading}

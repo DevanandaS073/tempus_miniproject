@@ -15,12 +15,13 @@ const companyRoutes = require('./routes/company'); // Import Company API
 const invitesRoutes = require('./routes/invites'); // Import Invite API
 const networkRoutes = require('./routes/network'); // Import Network API
 const reportsRoutes = require('./routes/reports'); // Import Reports API
+const certificatesRoutes = require('./routes/certificates'); // Import Certificates API
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use((req, res, next) => {
     next();
 });
@@ -47,9 +48,13 @@ app.use('/api/companies', companyRoutes); // Register Company API
 app.use('/api/invites', invitesRoutes); // Register Invite Router
 app.use('/api/network', networkRoutes); // Register Network Router
 app.use('/api/reports', reportsRoutes); // Register Reports Router
+app.use('/api/certificates', certificatesRoutes); // Register Certificates Router
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+    if (err.type === 'entity.too.large') {
+        return res.status(413).json({ error: 'Payload too large', details: err.message });
+    }
     console.error(err.stack);
     res.status(500).json({ error: 'Internal server error' });
 });

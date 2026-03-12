@@ -14,11 +14,9 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "bcryptjs": "^3.0.3",
-    "bullmq": "^5.70.4",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "ioredis": "^5.10.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.18.0",
     "prisma": "^7.3.0"
