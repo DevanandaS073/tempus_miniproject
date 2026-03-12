@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 
-export default function DayDetail({ selectedDate, events = [], meetings = [], onClose, onEditMeeting, onDeleteMeeting }) {
+export default function DayDetail({ selectedDate, events = [], meetings = [], onClose, onEditMeeting, onDeleteMeeting, onJoinMeeting, onLeaveMeeting }) {
     if (!selectedDate) return null
 
     const { hasFeature, user } = useAuth()
@@ -62,6 +62,27 @@ export default function DayDetail({ selectedDate, events = [], meetings = [], on
                                             <h4>{isEvent ? m.title.replace('[Event] ', '') : m.title}</h4>
                                             <p>{isEvent ? 'Joined Event' : `${m.participants?.length || 0} participants`}</p>
                                         </div>
+                                        {/* Join / Leave button */}
+                                        {!isEvent && (() => {
+                                            const isJoined = m.participants?.some(p => p.user_id === user?.id);
+                                            const isCreator = m.created_by === user?.id;
+                                            if (isCreator) return null;
+                                            return (
+                                                <button
+                                                    onClick={() => isJoined ? onLeaveMeeting?.(m.meeting_id) : onJoinMeeting?.(m.meeting_id)}
+                                                    style={{
+                                                        padding: '4px 8px', fontSize: '10px', fontWeight: 'bold',
+                                                        background: isJoined ? 'rgba(34,197,94,0.15)' : 'rgba(96,165,250,0.15)',
+                                                        border: isJoined ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(96,165,250,0.4)',
+                                                        color: isJoined ? '#86efac' : '#93c5fd',
+                                                        cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em',
+                                                        marginLeft: '8px'
+                                                    }}
+                                                >
+                                                    {isJoined ? 'Leave' : 'Join'}
+                                                </button>
+                                            );
+                                        })()}
                                         {/* Edit / Delete buttons — ownership-aware */}
                                         {(() => {
                                             const isCreator = m.created_by === user?.id;

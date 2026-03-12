@@ -16,4 +16,8 @@ router.post('/meetings', requireFeature('meeting:create'), calendarController.cr
 router.put('/meetings/:id', calendarController.updateMeeting);
 router.delete('/meetings/:id', calendarController.deleteMeeting);
 
+// ─── Meeting Participation ───────────────────────────────────────────────────
+router.post('/meetings/:id/join', requireFeature('calendar:view'), calendarController.joinMeeting);
+router.delete('/meetings/:id/join', requireFeature('calendar:view'), calendarController.leaveMeeting);
+
 module.exports = router;

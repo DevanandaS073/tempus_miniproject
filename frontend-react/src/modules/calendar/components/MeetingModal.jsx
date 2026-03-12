@@ -16,6 +16,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated, meeting }) {
     })
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [collisionWarning, setCollisionWarning] = useState(null) // { type, title, start, end }
 
     // Pre-fill in edit mode
     useEffect(() => {
@@ -38,13 +39,14 @@ export default function MeetingModal({ isOpen, onClose, onCreated, meeting }) {
             })
         }
         setError('')
+        setCollisionWarning(null)
     }, [meeting, isOpen])
 
     if (!isOpen) return null
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const submit = async (force = false) => {
         setError('')
+        setCollisionWarning(null)
         setLoading(true)
 
         try {
@@ -53,7 +55,7 @@ export default function MeetingModal({ isOpen, onClose, onCreated, meeting }) {
 
             const url = isEditMode
                 ? `/api/calendar/meetings/${meeting.meeting_id}`
-                : '/api/calendar/meetings'
+                : `/api/calendar/meetings${force ? '?force=true' : ''}`
             const method = isEditMode ? 'PUT' : 'POST'
 
             const res = await fetch(url, {
@@ -69,9 +71,16 @@ export default function MeetingModal({ isOpen, onClose, onCreated, meeting }) {
                 }),
             })
 
+            const data = await res.json()
+
+            if (res.status === 409 && data.conflictWith) {
+                setCollisionWarning(data.conflictWith)
+                return
+            }
+
             if (!res.ok) {
-                const data = await res.json()
-                throw new Error(data.error || `Failed to ${isEditMode ? 'update' : 'create'} meeting`)
+                setError(data.error || `Failed to ${isEditMode ? 'update' : 'create'} meeting`)
+                return
             }
 
             onCreated?.()
@@ -82,6 +91,13 @@ export default function MeetingModal({ isOpen, onClose, onCreated, meeting }) {
             setLoading(false)
         }
     }
+
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        submit(false)
+    }
+
+    const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -99,6 +115,36 @@ export default function MeetingModal({ isOpen, onClose, onCreated, meeting }) {
                 {error && (
                     <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-none px-4 py-2 mb-4">
                         {error}
+                    </div>
+                )}
+
+                {collisionWarning && (
+                    <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 text-sm rounded-none px-4 py-3 mb-4">
+                        <div className="flex items-start gap-2 mb-2">
+                            <i className="fas fa-exclamation-triangle text-amber-400 mt-0.5" />
+                            <div>
+                                <p className="font-semibold text-amber-200">Schedule Conflict</p>
+                                <p className="text-xs mt-0.5 text-amber-400">
+                                    Overlaps with {collisionWarning.type} &quot;{collisionWarning.title}&quot;
+                                    &nbsp;({fmtTime(collisionWarning.start)} – {fmtTime(collisionWarning.end)})
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                            <button
+                                onClick={() => submit(true)}
+                                disabled={loading}
+                                className="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-bold uppercase tracking-wider hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                            >
+                                Create Anyway
+                            </button>
+                            <button
+                                onClick={() => setCollisionWarning(null)}
+                                className="px-3 py-1.5 bg-white/5 border border-white/10 text-zinc-400 text-xs uppercase tracking-wider hover:text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
                 )}
 

@@ -87,6 +87,43 @@
             border-color: var(--accent);
         }
 
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            padding: 0;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+            transition: box-shadow 0.15s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.35);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+        }
+
         textarea {
             resize: vertical;
             min-height: 80px;
@@ -233,11 +270,69 @@
             box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.5);
             transition: transform 0.3s ease;
         }
+        /* View-mode: hide editing controls, show poster full-width */
+        body.view-mode .controls { display: none; }
+        body.view-mode .preview-area { flex: 1; }
+
+        /* ── Size Slider Row ── */
+        .size-slider-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .size-slider-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .size-slider-header label { margin: 0; }
+        .size-val {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 34px;
+            text-align: right;
+            letter-spacing: 0.02em;
+        }
+
+        /* ── Back Button (view mode only) ── */
+        .back-btn-overlay {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+        }
+        body.view-mode .back-btn-overlay { display: block; }
+        .back-btn {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(139, 92, 246, 0.35);
+            border-color: rgba(139, 92, 246, 0.6);
+        }
     </style>
 </head>
 
 <body>
     <div class="layout">
+        <!-- Back button: only visible in view mode -->
+        <div class="back-btn-overlay">
+            <button class="back-btn" onclick="goBack()">← Back to Operations</button>
+        </div>
+
         <!-- Controls Sidebar -->
         <div class="controls">
             <div class="control-group">
@@ -253,21 +348,55 @@
             <div class="control-group">
                 <h2>Content Editor</h2>
 
-                <label>Event Title</label>
+                <div class="size-slider-row">
+                    <div class="size-slider-header">
+                        <label>Event Title</label>
+                        <span class="size-val" id="size-display-title">82px</span>
+                    </div>
+                    <input type="range" id="slider-title" min="32" max="120" step="2" value="82"
+                           oninput="onSliderChange('title', +this.value)">
+                </div>
                 <input type="text" id="input-title" value="Future of AI Design 2026">
 
-                <label>Subtitle</label>
-                <input type="text" id="input-subtitle" value="Generative Art & Typography">
+                <div class="size-slider-row">
+                    <div class="size-slider-header">
+                        <label>Subtitle</label>
+                        <span class="size-val" id="size-display-subtitle">24px</span>
+                    </div>
+                    <input type="range" id="slider-subtitle" min="12" max="48" step="1" value="24"
+                           oninput="onSliderChange('subtitle', +this.value)">
+                </div>
+                <input type="text" id="input-subtitle" value="Generative Art &amp; Typography">
 
-                <label>Date & Time</label>
+                <div class="size-slider-row">
+                    <div class="size-slider-header">
+                        <label>Date &amp; Time</label>
+                        <span class="size-val" id="size-display-date">18px</span>
+                    </div>
+                    <input type="range" id="slider-date" min="10" max="36" step="1" value="18"
+                           oninput="onSliderChange('date', +this.value)">
+                </div>
                 <input type="text" id="input-date" value="October 15, 2026 • 9:00 AM">
 
-                <label>Location</label>
+                <div class="size-slider-row">
+                    <div class="size-slider-header">
+                        <label>Location</label>
+                        <span class="size-val" id="size-display-location">18px</span>
+                    </div>
+                    <input type="range" id="slider-location" min="10" max="36" step="1" value="18"
+                           oninput="onSliderChange('location', +this.value)">
+                </div>
                 <input type="text" id="input-location" value="Grand Convention Hall, NY">
 
-                <label>Description</label>
-                <textarea
-                    id="input-desc">Join visual designers and AI engineers for a deep dive into the next generation of generative interfaces. Experience the future of automated design systems.</textarea>
+                <div class="size-slider-row">
+                    <div class="size-slider-header">
+                        <label>Description</label>
+                        <span class="size-val" id="size-display-description">20px</span>
+                    </div>
+                    <input type="range" id="slider-description" min="10" max="36" step="1" value="20"
+                           oninput="onSliderChange('description', +this.value)">
+                </div>
+                <textarea id="input-desc">Join visual designers and AI engineers for a deep dive into the next generation of generative interfaces. Experience the future of automated design systems.</textarea>
             </div>
 
             <!-- Assets Section -->
@@ -285,7 +414,14 @@
                     </label>
                 </div>
 
-                <label>Organisation Name</label>
+                <div class="size-slider-row">
+                    <div class="size-slider-header">
+                        <label>Organisation Name Size</label>
+                        <span class="size-val" id="size-display-orgName">13px</span>
+                    </div>
+                    <input type="range" id="slider-orgName" min="8" max="28" step="1" value="13"
+                           oninput="onSliderChange('orgName', +this.value)">
+                </div>
                 <input type="text" id="input-org-name" placeholder="e.g. TechFest Society">
 
                 <label>Logo</label>
@@ -298,9 +434,21 @@
                             onclick="clearLogo(event)">✕</span>
                     </label>
                 </div>
+
+                <div class="size-slider-row">
+                    <div class="size-slider-header">
+                        <label>Logo Size</label>
+                        <span class="size-val" id="size-display-logo">120px</span>
+                    </div>
+                    <input type="range" id="slider-logo" min="40" max="220" step="5" value="120"
+                           oninput="onSliderChange('logo', +this.value)">
+                </div>
             </div>
 
             <button class="action-btn" onclick="updatePoster()">Update Poster ⚡️</button>
+            <button class="action-btn save-btn" onclick="savePoster()"
+                style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); margin-top: 12px;">Save Poster
+                💾</button>
             <button class="action-btn download-btn" onclick="downloadPoster()"
                 style="background: linear-gradient(135deg, #10b981, #059669); margin-top: 12px;">Download Image
                 📥</button>
@@ -330,6 +478,17 @@
         let renderer = null;
         let currentBgImageDataUrl = null;
         let currentLogoDataUrl = null;
+
+        // Font size overrides (px) — defaults match the template CSS
+        const currentSizes = { title: 82, subtitle: 24, date: 18, location: 18, description: 20, orgName: 13, logo: 120 };
+        const selectorMap = {
+            title:       '[data-zone="hero"] .poster-title',
+            subtitle:    '[data-zone="subtitle"] .poster-body',
+            date:        '[data-content="date"]',
+            location:    '[data-content="location"]',
+            description: '[data-zone="body"] .poster-body',
+            orgName:     '.poster-org-name, .org-name'
+        };
 
         /* ---- File input helpers ---- */
 
@@ -391,6 +550,34 @@
                 if (btn.textContent.toLowerCase() === theme) btn.classList.add('active');
             });
             updatePoster();
+        }
+
+        /* ---- Font size controls ---- */
+
+        function onSliderChange(field, value) {
+            currentSizes[field] = value;
+            const display = document.getElementById('size-display-' + field);
+            if (display) display.textContent = value + 'px';
+            applyFontSizes();
+        }
+
+        function applyFontSizes() {
+            const container = document.querySelector('#poster-preview');
+            if (!container) return;
+            for (const [field, selector] of Object.entries(selectorMap)) {
+                container.querySelectorAll(selector).forEach(el => {
+                    el.style.fontSize = currentSizes[field] + 'px';
+                });
+            }
+            // Logo max-height
+            container.querySelectorAll('.poster-logo-img').forEach(el => {
+                el.style.maxHeight = currentSizes.logo + 'px';
+                el.style.maxWidth = 'none';
+            });
+        }
+
+        function goBack() {
+            window.parent.postMessage({ type: 'go_back' }, '*');
         }
 
         /* ---- Apply assets to rendered poster DOM ---- */
@@ -477,11 +664,55 @@
                 // 4. Apply uploaded assets
                 injectLogoZone(container);
 
-                // 5. Initialize renderer
+                // 5. Apply font size overrides
+                applyFontSizes();
+
+                // 6. Initialize renderer
                 renderer = new PosterRenderer();
 
             } catch (err) {
                 console.error("Rendering failed:", err);
+            }
+        }
+
+        async function savePoster() {
+            if (!renderer) {
+                alert('Poster renderer not ready. Please wait a moment and try again.');
+                return;
+            }
+
+            const posterElement = document.querySelector('.poster-container');
+            const btn = document.querySelector('.save-btn');
+            const originalText = btn.innerHTML;
+
+            try {
+                btn.innerHTML = 'Saving… ⏳';
+                btn.disabled = true;
+
+                // Collect current form data including image data URLs for full fidelity
+                const formData = {
+                    title: document.getElementById('input-title').value,
+                    subtitle: document.getElementById('input-subtitle').value,
+                    date: document.getElementById('input-date').value,
+                    location: document.getElementById('input-location').value,
+                    description: document.getElementById('input-desc').value,
+                    orgName: document.getElementById('input-org-name').value,
+                    theme: currentTheme,
+                    bgImage: currentBgImageDataUrl || null,
+                    logoImage: currentLogoDataUrl || null,
+                    sizes: { ...currentSizes }
+                };
+
+                // Post the form data to the parent React page for persistence
+                window.parent.postMessage({ type: 'save_poster', formData }, '*');
+
+                btn.innerHTML = 'Saved ✓';
+                // Button stays disabled — parent will navigate away
+            } catch (error) {
+                console.error('Save failed:', error);
+                alert('Failed to save poster. \n\nError: ' + error.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 
@@ -524,7 +755,86 @@
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', updatePoster);
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Read URL params and pre-fill form inputs
+            const params = new URLSearchParams(window.location.search);
+            const mode = params.get('mode') || 'edit';
+
+            const titleVal = params.get('title');
+            const dateVal = params.get('date');
+            const locationVal = params.get('location');
+            const descVal = params.get('description');
+
+            if (titleVal) document.getElementById('input-title').value = titleVal;
+            if (locationVal) document.getElementById('input-location').value = locationVal;
+            if (descVal) document.getElementById('input-desc').value = descVal;
+            if (dateVal) {
+                // Try to format the ISO date as a readable string
+                try {
+                    const d = new Date(dateVal);
+                    if (!isNaN(d)) {
+                        document.getElementById('input-date').value =
+                            d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                    } else {
+                        document.getElementById('input-date').value = dateVal;
+                    }
+                } catch {
+                    document.getElementById('input-date').value = dateVal;
+                }
+            }
+
+            // 2. Apply view mode if requested
+            if (mode === 'view') {
+                document.body.classList.add('view-mode');
+            }
+
+            // 3. Listen for data pushed from the parent React page
+            window.addEventListener('message', (e) => {
+                if (e.data?.type === 'load_poster_data') {
+                    const d = e.data.data;
+                    if (d.title !== undefined) document.getElementById('input-title').value = d.title;
+                    if (d.subtitle !== undefined) document.getElementById('input-subtitle').value = d.subtitle;
+                    if (d.date !== undefined) document.getElementById('input-date').value = d.date;
+                    if (d.location !== undefined) document.getElementById('input-location').value = d.location;
+                    if (d.description !== undefined) document.getElementById('input-desc').value = d.description;
+                    if (d.orgName !== undefined) document.getElementById('input-org-name').value = d.orgName;
+                    if (d.theme) setTheme(d.theme);
+
+                    // Restore background image
+                    if (d.bgImage) {
+                        currentBgImageDataUrl = d.bgImage;
+                        document.getElementById('bg-image-name').textContent = 'Saved image';
+                        document.getElementById('bg-clear').style.display = '';
+                        document.getElementById('bg-image-label').classList.add('has-file');
+                    }
+
+                    // Restore logo
+                    if (d.logoImage) {
+                        currentLogoDataUrl = d.logoImage;
+                        document.getElementById('logo-name').textContent = 'Saved logo';
+                        document.getElementById('logo-clear').style.display = '';
+                        document.getElementById('logo-label').classList.add('has-file');
+                    }
+
+                    // Restore font sizes and update sliders
+                    if (d.sizes) {
+                        for (const [field, size] of Object.entries(d.sizes)) {
+                            if (Object.prototype.hasOwnProperty.call(currentSizes, field)) {
+                                currentSizes[field] = size;
+                                const display = document.getElementById('size-display-' + field);
+                                if (display) display.textContent = size + 'px';
+                                const slider = document.getElementById('slider-' + field);
+                                if (slider) slider.value = size;
+                            }
+                        }
+                    }
+
+                    updatePoster();
+                }
+            });
+
+            updatePoster();
+        });
     </script>
 </body>
 

@@ -442,8 +442,10 @@ const getEventMedia = async (req, res) => {
         });
         if (!event) return res.status(404).json({ error: 'Event not found' });
 
+        // Exclude poster_path (can be large JSON) from the media summary
         const posters = await prisma.generated_posters.findMany({
             where: { event_id: eventId },
+            select: { id: true, status: true, generated_at: true },
             orderBy: { generated_at: 'desc' }
         });
 
@@ -459,10 +461,12 @@ const getEventMedia = async (req, res) => {
             orderBy: { generated_at: 'desc' }
         });
 
+        const completedPoster = posters.find(p => p.status === 'completed');
+
         res.json({
             posters,
             certificates,
-            has_poster: posters.length > 0,
+            has_poster: !!completedPoster,
             has_certificates: certificates.length > 0,
             poster_status: posters[0]?.status || null,
             certificates_count: certificates.length
@@ -529,6 +533,80 @@ const setupAutoCertificates = async (req, res) => {
     }
 };
 
+// ─── PUT /api/events/:id/media/poster ───────────────────────────────────────
+// Save (create or update) the poster configuration for an event.
+// Only the event creator can save. poster_data is a JSON string of form values.
+const savePoster = async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id);
+        const userId = req.user.id;
+        const companyId = req.user.company_id;
+        const { poster_data } = req.body;
+
+        if (!poster_data) return res.status(400).json({ error: 'poster_data is required' });
+
+        const event = await prisma.events.findFirst({
+            where: { event_id: eventId, company_id: companyId }
+        });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+        if (event.created_by !== userId) {
+            return res.status(403).json({ error: 'Only the event creator can save the poster' });
+        }
+
+        const existing = await prisma.generated_posters.findFirst({
+            where: { event_id: eventId }
+        });
+
+        let poster;
+        if (existing) {
+            poster = await prisma.generated_posters.update({
+                where: { id: existing.id },
+                data: { poster_path: poster_data, status: 'completed' }
+            });
+        } else {
+            poster = await prisma.generated_posters.create({
+                data: {
+                    event_id: eventId,
+                    template_id: 1,
+                    poster_path: poster_data,
+                    status: 'completed'
+                }
+            });
+        }
+
+        res.json({ message: 'Poster saved successfully', poster: { id: poster.id, status: poster.status } });
+    } catch (error) {
+        console.error('Save Poster Error:', error);
+        res.status(500).json({ error: 'Failed to save poster' });
+    }
+};
+
+// ─── GET /api/events/:id/media/poster/data ──────────────────────────────────
+// Return the saved poster configuration (JSON string) for a completed poster.
+// Accessible to all company members with event:view.
+const getPosterData = async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id);
+        const companyId = req.user.company_id;
+
+        const event = await prisma.events.findFirst({
+            where: { event_id: eventId, company_id: companyId }
+        });
+        if (!event) return res.status(404).json({ error: 'Event not found' });
+
+        const poster = await prisma.generated_posters.findFirst({
+            where: { event_id: eventId, status: 'completed' },
+            select: { poster_path: true }
+        });
+        if (!poster) return res.status(404).json({ error: 'No completed poster found' });
+
+        res.json({ poster_data: poster.poster_path });
+    } catch (error) {
+        console.error('Get Poster Data Error:', error);
+        res.status(500).json({ error: 'Failed to fetch poster data' });
+    }
+};
+
 module.exports = {
     getEvents,
     getEvent,
@@ -543,5 +621,7 @@ module.exports = {
     generateCertificates,
     getEventMedia,
     getCertificateTemplates,
-    setupAutoCertificates
+    setupAutoCertificates,
+    savePoster,
+    getPosterData
 };

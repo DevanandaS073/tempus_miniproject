@@ -15,6 +15,7 @@ export default function EventBuilder({ event, onClose, onSaved }) {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [collisionWarning, setCollisionWarning] = useState(null); // { type, title, start, end }
 
     // Pre-fill in edit mode
     useEffect(() => {
@@ -38,19 +39,14 @@ export default function EventBuilder({ event, onClose, onSaved }) {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const submitEvent = async (force = false) => {
         setError('');
-
-        if (!formData.title.trim()) return setError('Title is required');
-        if (!formData.start_date) return setError('Start date is required');
-        if (!formData.end_date) return setError('End date is required');
-
+        setCollisionWarning(null);
         setLoading(true);
         try {
             const url = isEditMode
                 ? `/api/events/${event.event_id}`
-                : '/api/events';
+                : `/api/events${force ? '?force=true' : ''}`;
             const method = isEditMode ? 'PUT' : 'POST';
 
             const res = await fetch(url, {
@@ -63,7 +59,16 @@ export default function EventBuilder({ event, onClose, onSaved }) {
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to save event');
+
+            if (res.status === 409 && data.conflictWith) {
+                setCollisionWarning(data.conflictWith);
+                return;
+            }
+
+            if (!res.ok) {
+                setError(data.error || 'Failed to save event');
+                return;
+            }
 
             onSaved?.();
             onClose?.();
@@ -72,6 +77,17 @@ export default function EventBuilder({ event, onClose, onSaved }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setError('');
+
+        if (!formData.title.trim()) return setError('Title is required');
+        if (!formData.start_date) return setError('Start date is required');
+        if (!formData.end_date) return setError('End date is required');
+
+        submitEvent(false);
     };
 
     const eventTypes = ['general', 'conference', 'workshop', 'social', 'training', 'meeting', 'hackathon'];
@@ -102,6 +118,42 @@ export default function EventBuilder({ event, onClose, onSaved }) {
                         {error}
                     </div>
                 )}
+
+                {/* Collision Warning */}
+                {collisionWarning && (() => {
+                    const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return (
+                        <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/40 text-amber-300 text-sm">
+                            <div className="flex items-start gap-2 mb-2">
+                                <i className="fas fa-exclamation-triangle text-amber-400 mt-0.5" />
+                                <div>
+                                    <p className="font-semibold text-amber-200">Schedule Conflict</p>
+                                    <p className="text-xs mt-0.5 text-amber-400">
+                                        Overlaps with {collisionWarning.type} &quot;{collisionWarning.title}&quot;
+                                        &nbsp;({fmtTime(collisionWarning.start)} &ndash; {fmtTime(collisionWarning.end)})
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => submitEvent(true)}
+                                    disabled={loading}
+                                    className="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-bold uppercase tracking-wider hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                                >
+                                    Create Anyway
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCollisionWarning(null)}
+                                    className="px-3 py-1.5 bg-white/5 border border-white/10 text-zinc-400 text-xs uppercase tracking-wider hover:text-white transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     {/* Title */}

@@ -219,7 +219,7 @@ model generated_posters {
   id           Int               @id @default(autoincrement())
   event_id     Int
   template_id  Int
-  poster_path  String            @db.VarChar(500)
+  poster_path  String            @db.Text
   generated_at DateTime          @default(now()) @db.Timestamp(6)
   status       Status            @default(pending)
   

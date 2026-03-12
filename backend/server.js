@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const prisma = require('./prismaClient');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 // Routes
@@ -62,7 +63,12 @@ app.use((err, req, res, next) => {
 // Fallback route for React Router (Single Page Application)
 // Must be declared after all API routes
 app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend-react/dist', 'index.html'));
+    const indexPath = path.join(__dirname, '../frontend-react/dist', 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
 });
 
 app.listen(PORT, () => {

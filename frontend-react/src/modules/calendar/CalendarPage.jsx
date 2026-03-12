@@ -69,6 +69,30 @@ export default function CalendarPage() {
         }
     }
 
+    const handleJoinMeeting = async (meetingId) => {
+        try {
+            await fetch(`/api/calendar/meetings/${meetingId}/join`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            fetchData()
+        } catch (err) {
+            console.error('Failed to join meeting:', err)
+        }
+    }
+
+    const handleLeaveMeeting = async (meetingId) => {
+        try {
+            await fetch(`/api/calendar/meetings/${meetingId}/join`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            fetchData()
+        } catch (err) {
+            console.error('Failed to leave meeting:', err)
+        }
+    }
+
     return (
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
             <header className="flex flex-col gap-2 mb-2">
@@ -142,6 +166,8 @@ export default function CalendarPage() {
                     onClose={() => setSelectedDate(null)}
                     onEditMeeting={handleEditMeeting}
                     onDeleteMeeting={handleDeleteMeeting}
+                    onJoinMeeting={handleJoinMeeting}
+                    onLeaveMeeting={handleLeaveMeeting}
                 />
             )}
         </div>

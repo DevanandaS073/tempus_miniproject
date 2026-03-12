@@ -13,6 +13,7 @@ export default function EventCard({ event, onRefresh, onEdit }) {
     const canDelete = hasFeature('event:delete');
     const canGeneratePoster = hasFeature('event:generate_poster');
     const canGenerateCertificates = hasFeature('event:generate_certificates');
+    const isCreator = user?.id === event.created_by;
     const navigate = useNavigate();
 
     const [media, setMedia] = useState(null);
@@ -50,23 +51,20 @@ export default function EventCard({ event, onRefresh, onEdit }) {
         }
     };
 
-    const handleGeneratePoster = async () => {
-        setMediaLoading(true);
-        try {
-            const res = await fetch(`/api/events/${event.event_id}/media/poster`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error);
-            }
-            fetchMedia();
-        } catch (err) {
-            console.error(err.message);
-        } finally {
-            setMediaLoading(false);
-        }
+    const handleOpenPosterEditor = () => {
+        const params = new URLSearchParams({
+            eventId: event.event_id,
+            mode: 'edit',
+            title: event.title || '',
+            date: event.start_date || '',
+            location: event.location || '',
+            description: event.description || ''
+        });
+        navigate(`/poster-gen?${params.toString()}`);
+    };
+
+    const handleViewPoster = () => {
+        navigate(`/poster-gen?eventId=${event.event_id}&mode=view`);
     };
 
     const handleGenerateCertificates = async () => {
@@ -220,28 +218,28 @@ export default function EventCard({ event, onRefresh, onEdit }) {
             {/* Media Actions */}
             {media && (
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800/50">
-                    {/* Poster */}
-                    {canGeneratePoster && !media.has_poster && (
+                    {/* Poster — creator: Generate / Edit; others: View (only when completed) */}
+                    {isCreator && canGeneratePoster && media.poster_status !== 'completed' && (
                         <button
-                            onClick={handleGeneratePoster}
-                            disabled={mediaLoading}
+                            onClick={handleOpenPosterEditor}
                             className="px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold tracking-wider uppercase
-                                       hover:bg-purple-500/20 transition-colors disabled:opacity-50"
+                                       hover:bg-purple-500/20 transition-colors"
                         >
-                            {mediaLoading ? '...' : 'Generate Poster'}
+                            Generate Poster
                         </button>
                     )}
-                    {media.has_poster && (
+                    {isCreator && canGeneratePoster && media.poster_status === 'completed' && (
                         <button
-                            onClick={() => {
-                                const params = new URLSearchParams({
-                                    title: event.title || '',
-                                    date: event.start_date || '',
-                                    location: event.location || '',
-                                    description: event.description || ''
-                                });
-                                navigate(`/poster-gen?${params.toString()}`);
-                            }}
+                            onClick={handleOpenPosterEditor}
+                            className="px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold tracking-wider uppercase
+                                       hover:bg-purple-500/20 transition-colors"
+                        >
+                            Edit Poster
+                        </button>
+                    )}
+                    {!isCreator && media.poster_status === 'completed' && (
+                        <button
+                            onClick={handleViewPoster}
                             className="px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold tracking-wider uppercase
                                        hover:bg-purple-500/20 transition-colors"
                         >

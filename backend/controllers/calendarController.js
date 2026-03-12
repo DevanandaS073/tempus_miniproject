@@ -41,6 +41,7 @@ const createMeeting = async (req, res) => {
         const { title, start_time, end_time } = req.body;
         const userId = req.user.id;
         const companyId = req.user.company_id;
+        const force = req.query.force === 'true';
 
         if (!companyId) return res.status(403).json({ error: 'User must belong to a workspace.' });
 
@@ -51,36 +52,38 @@ const createMeeting = async (req, res) => {
         let calendar = await prisma.calendars.findUnique({ where: { user_id: userId } });
         if (!calendar) calendar = await prisma.calendars.create({ data: { user_id: userId, company_id: companyId } });
 
-        // 2. Conflict Check — against other meetings in this company
-        const meetingConflict = await prisma.meetings.findFirst({
-            where: {
-                company_id: companyId,
-                start_time: { lt: endDt },
-                end_time: { gt: startDt }
-            }
-        });
-
-        if (meetingConflict) {
-            return res.status(409).json({
-                error: `Time conflicts with existing meeting: "${meetingConflict.title}"`,
-                conflictWith: { type: 'meeting', title: meetingConflict.title, start: meetingConflict.start_time, end: meetingConflict.end_time }
+        if (!force) {
+            // 2. Conflict Check — against other meetings in this company
+            const meetingConflict = await prisma.meetings.findFirst({
+                where: {
+                    company_id: companyId,
+                    start_time: { lt: endDt },
+                    end_time: { gt: startDt }
+                }
             });
-        }
 
-        // 3. Conflict Check — against events in this company
-        const eventConflict = await prisma.events.findFirst({
-            where: {
-                company_id: companyId,
-                start_date: { lt: endDt },
-                end_date: { gt: startDt }
+            if (meetingConflict) {
+                return res.status(409).json({
+                    error: `Time conflicts with existing meeting: "${meetingConflict.title}"`,
+                    conflictWith: { type: 'meeting', title: meetingConflict.title, start: meetingConflict.start_time, end: meetingConflict.end_time }
+                });
             }
-        });
 
-        if (eventConflict) {
-            return res.status(409).json({
-                error: `Time conflicts with existing event: "${eventConflict.title}"`,
-                conflictWith: { type: 'event', title: eventConflict.title, start: eventConflict.start_date, end: eventConflict.end_date }
+            // 3. Conflict Check — against events in this company
+            const eventConflict = await prisma.events.findFirst({
+                where: {
+                    company_id: companyId,
+                    start_date: { lt: endDt },
+                    end_date: { gt: startDt }
+                }
             });
+
+            if (eventConflict) {
+                return res.status(409).json({
+                    error: `Time conflicts with existing event: "${eventConflict.title}"`,
+                    conflictWith: { type: 'event', title: eventConflict.title, start: eventConflict.start_date, end: eventConflict.end_date }
+                });
+            }
         }
 
         // 4. Create Meeting
@@ -200,5 +203,58 @@ const deleteMeeting = async (req, res) => {
     }
 };
 
-module.exports = { getMeetings, createMeeting, updateMeeting, deleteMeeting };
+// Join a meeting (add current user as participant)
+const joinMeeting = async (req, res) => {
+    try {
+        const meetingId = parseInt(req.params.id);
+        const userId = req.user.id;
+        const companyId = req.user.company_id;
+
+        if (!companyId) return res.status(403).json({ error: 'User must belong to a workspace.' });
+
+        const meeting = await prisma.meetings.findFirst({
+            where: { meeting_id: meetingId, company_id: companyId }
+        });
+        if (!meeting) return res.status(404).json({ error: 'Meeting not found in your workspace.' });
+
+        // Upsert participant row (idempotent)
+        await prisma.meeting_participants.upsert({
+            where: { meeting_id_user_id: { meeting_id: meetingId, user_id: userId } },
+            update: { status: 'accepted' },
+            create: { meeting_id: meetingId, user_id: userId, status: 'accepted' }
+        });
+
+        res.json({ message: 'Joined meeting successfully.' });
+    } catch (error) {
+        console.error("JOIN Meeting Error:", error);
+        res.status(500).json({ error: 'Failed to join meeting', details: error.message });
+    }
+};
+
+// Leave a meeting (remove current user as participant)
+const leaveMeeting = async (req, res) => {
+    try {
+        const meetingId = parseInt(req.params.id);
+        const userId = req.user.id;
+        const companyId = req.user.company_id;
+
+        if (!companyId) return res.status(403).json({ error: 'User must belong to a workspace.' });
+
+        const meeting = await prisma.meetings.findFirst({
+            where: { meeting_id: meetingId, company_id: companyId }
+        });
+        if (!meeting) return res.status(404).json({ error: 'Meeting not found in your workspace.' });
+
+        await prisma.meeting_participants.deleteMany({
+            where: { meeting_id: meetingId, user_id: userId }
+        });
+
+        res.json({ message: 'Left meeting successfully.' });
+    } catch (error) {
+        console.error("LEAVE Meeting Error:", error);
+        res.status(500).json({ error: 'Failed to leave meeting', details: error.message });
+    }
+};
+
+module.exports = { getMeetings, createMeeting, updateMeeting, deleteMeeting, joinMeeting, leaveMeeting };
 
