@@ -54,3 +54,45 @@ npm run dev
 ```
 
 Your React application will now be running and visible at `http://localhost:5173`.
+
+---
+
+## Postman & Automated API Testing
+
+The backend includes a Postman collection and automated test scripts.
+
+### Postman setup
+
+1. Open Postman and import both files from `app/backend/postman/`:
+   - `Tempus-Auth.postman_collection.json`
+   - `Tempus.local.postman_environment.json`
+2. Select the `Tempus Local` environment.
+3. Ensure backend server is running at `http://localhost:3000`.
+4. Run the full collection (`Tempus Auth API`) from the Collection Runner.
+
+### CLI testing commands
+
+From `app/backend/`:
+
+- `npm run test:auth` → runs auth smoke tests (`tests/test_auth.js`)
+- `npm run test:all` → runs sequential backend test modules (`tests/run_all_tests.js`)
+- `npm run test:all:auto` → auto-logins test users, injects tokens, then runs full suite
+- `npm run test:setup-credentials` → prompts once and safely writes login credentials to `.env`
+- `npm run test:postman` → runs Postman collection with Newman
+- `npm run test:postman:ci` → runs Newman with `cli` + `junit` output (`tests/newman-results.xml`)
+
+### Optional test environment variables
+
+- `TEST_BASE_URL` (default: `http://localhost:3000`)
+- `TEST_TOKEN` (for modules requiring admin token)
+- `TEST_WORKER_TOKEN` (optional worker token for RBAC checks)
+
+For `npm run test:all:auto`, set login credentials (in `.env` or shell):
+
+- `TEST_LOGIN_EMAIL` and `TEST_LOGIN_PASSWORD` (required)
+- `TEST_WORKER_LOGIN_EMAIL` and `TEST_WORKER_LOGIN_PASSWORD` (optional)
+
+Recommended local flow:
+
+1. Run `npm run test:setup-credentials` once.
+2. Run `npm run test:all:auto` for full automated backend testing.

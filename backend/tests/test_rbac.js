@@ -37,7 +37,7 @@ async function run() {
 
     if (!ADMIN_TOKEN) {
         console.log('  ⚠️  TEST_TOKEN not set. Set it to an admin JWT and re-run.\n');
-        process.exit(0);
+        process.exit(2);
     }
 
     let createdRoleId = null;
@@ -66,7 +66,7 @@ async function run() {
     // ── 3. Create a new custom role ───────────────────────────────────────────
     const createRole = await request('POST', '/api/companies/roles', {
         name: '[TEST] Coordinator',
-        feature_codes: ['event:view', 'calendar:view'],
+        features: ['event:view', 'calendar:view'],
     }, ADMIN_TOKEN);
     if ((createRole.status === 200 || createRole.status === 201) && createRole.body?.id) {
         pass('Create custom role returns new role with id');
@@ -89,7 +89,7 @@ async function run() {
     if (createdRoleId) {
         const update = await request('PUT', `/api/companies/roles/${createdRoleId}`, {
             name: '[TEST] Senior Coordinator',
-            feature_codes: ['event:view', 'calendar:view', 'meeting:create'],
+            features: ['event:view', 'calendar:view', 'meeting:create'],
         }, ADMIN_TOKEN);
         if (update.status === 200) {
             pass('Update role returns 200');
@@ -102,7 +102,7 @@ async function run() {
     if (WORKER_TOKEN) {
         const noPerms = await request('POST', '/api/companies/roles', {
             name: '[TEST] Unauthorized Role',
-            feature_codes: [],
+            features: [],
         }, WORKER_TOKEN);
         if (noPerms.status === 403) {
             pass('Worker without role:create gets 403 on POST /companies/roles');

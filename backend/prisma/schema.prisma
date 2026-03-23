@@ -82,6 +82,23 @@ model users {
   notifications          notifications[]
   reports                user_reports[]
   certificate_downloads  certificate_downloads[]
+  password_reset_otps    password_reset_otps[]
+}
+
+model password_reset_otps {
+  id            Int       @id @default(autoincrement())
+  user_id       Int
+  otp_hash      String
+  attempt_count Int       @default(0)
+  expires_at    DateTime  @db.Timestamp(6)
+  consumed_at   DateTime? @db.Timestamp(6)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+
+  user          users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@index([consumed_at])
 }
 
 model user_reports {

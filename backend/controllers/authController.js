@@ -1,6 +1,40 @@
 const prisma = require('../prismaClient');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { sendForgotPasswordOtpEmail } = require('../services/emailService');
+
+const OTP_TTL_MINUTES = Number(process.env.PASSWORD_RESET_OTP_TTL_MINUTES || 10);
+const OTP_MAX_ATTEMPTS = Number(process.env.PASSWORD_RESET_OTP_MAX_ATTEMPTS || 5);
+
+function normalizeEmail(email) {
+    return (email || '').trim().toLowerCase();
+}
+
+function generateOtp() {
+    return String(crypto.randomInt(100000, 1000000));
+}
+
+function hashOtp(otp) {
+    return crypto.createHash('sha256').update(String(otp)).digest('hex');
+}
+
+function genericForgotResponse(res) {
+    return res.json({
+        message: 'If an account exists, an OTP has been sent to the registered email.'
+    });
+}
+
+async function findLatestActiveOtp(userId) {
+    return prisma.password_reset_otps.findFirst({
+        where: {
+            user_id: userId,
+            consumed_at: null,
+            expires_at: { gt: new Date() }
+        },
+        orderBy: { created_at: 'desc' }
+    });
+}
 
 exports.login = async (req, res) => {
     const { email, password } = req.body;
@@ -117,19 +151,158 @@ exports.signup = async (req, res) => {
 };
 
 exports.forgotPassword = async (req, res) => {
-    const { email } = req.body;
+    const email = normalizeEmail(req.body?.email);
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
     try {
         const user = await prisma.users.findUnique({ where: { email } });
         if (!user) {
             console.log(`Forgot password requested for non-existent email: ${email}`);
-        } else {
-            console.log(`Password reset requested for: ${email}`);
+            return genericForgotResponse(res);
         }
 
-        res.json({ message: 'If an account exists, a reset link has been sent.' });
+        const otp = generateOtp();
+        const otpHash = hashOtp(otp);
+        const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
+
+        await prisma.password_reset_otps.updateMany({
+            where: {
+                user_id: user.id,
+                consumed_at: null
+            },
+            data: { consumed_at: new Date() }
+        });
+
+        await prisma.password_reset_otps.create({
+            data: {
+                user_id: user.id,
+                otp_hash: otpHash,
+                expires_at: expiresAt
+            }
+        });
+
+        await sendForgotPasswordOtpEmail(user.email, otp);
+
+        return genericForgotResponse(res);
     } catch (err) {
-        console.error(err);
+        console.error('Forgot password error:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+exports.verifyForgotPasswordOtp = async (req, res) => {
+    const email = normalizeEmail(req.body?.email);
+    const otp = (req.body?.otp || '').trim();
+
+    if (!email || !otp) {
+        return res.status(400).json({ error: 'Email and OTP are required' });
+    }
+
+    try {
+        const user = await prisma.users.findUnique({ where: { email }, select: { id: true } });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired OTP' });
+        }
+
+        const latestOtp = await findLatestActiveOtp(user.id);
+        if (!latestOtp) {
+            return res.status(400).json({ error: 'Invalid or expired OTP' });
+        }
+
+        if (latestOtp.attempt_count >= OTP_MAX_ATTEMPTS) {
+            await prisma.password_reset_otps.update({
+                where: { id: latestOtp.id },
+                data: { consumed_at: new Date() }
+            });
+            return res.status(400).json({ error: 'OTP attempts exceeded. Request a new OTP.' });
+        }
+
+        const valid = hashOtp(otp) === latestOtp.otp_hash;
+        if (!valid) {
+            const nextAttempts = latestOtp.attempt_count + 1;
+            await prisma.password_reset_otps.update({
+                where: { id: latestOtp.id },
+                data: {
+                    attempt_count: nextAttempts,
+                    consumed_at: nextAttempts >= OTP_MAX_ATTEMPTS ? new Date() : null
+                }
+            });
+            return res.status(400).json({ error: 'Invalid or expired OTP' });
+        }
+
+        return res.json({ message: 'OTP verified' });
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+exports.resetPasswordWithOtp = async (req, res) => {
+    const email = normalizeEmail(req.body?.email);
+    const otp = (req.body?.otp || '').trim();
+    const newPassword = req.body?.newPassword;
+
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ error: 'Email, OTP, and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+    }
+
+    try {
+        const user = await prisma.users.findUnique({ where: { email }, select: { id: true } });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid OTP or reset request' });
+        }
+
+        const latestOtp = await findLatestActiveOtp(user.id);
+        if (!latestOtp) {
+            return res.status(400).json({ error: 'Invalid OTP or reset request' });
+        }
+
+        if (latestOtp.attempt_count >= OTP_MAX_ATTEMPTS) {
+            await prisma.password_reset_otps.update({
+                where: { id: latestOtp.id },
+                data: { consumed_at: new Date() }
+            });
+            return res.status(400).json({ error: 'OTP attempts exceeded. Request a new OTP.' });
+        }
+
+        const valid = hashOtp(otp) === latestOtp.otp_hash;
+        if (!valid) {
+            const nextAttempts = latestOtp.attempt_count + 1;
+            await prisma.password_reset_otps.update({
+                where: { id: latestOtp.id },
+                data: {
+                    attempt_count: nextAttempts,
+                    consumed_at: nextAttempts >= OTP_MAX_ATTEMPTS ? new Date() : null
+                }
+            });
+            return res.status(400).json({ error: 'Invalid OTP or reset request' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+        await prisma.$transaction([
+            prisma.users.update({
+                where: { id: user.id },
+                data: { password_hash: hashedNewPassword }
+            }),
+            prisma.password_reset_otps.updateMany({
+                where: { user_id: user.id, consumed_at: null },
+                data: { consumed_at: new Date() }
+            })
+        ]);
+
+        return res.json({ message: 'Password reset successful' });
+    } catch (error) {
+        console.error('Reset password with OTP error:', error);
+        return res.status(500).json({ error: 'Internal server error' });
     }
 };
 

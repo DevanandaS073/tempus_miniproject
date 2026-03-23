@@ -1,0 +1,2 @@
+$body = @{ email="admin@yourdomain.com"; password="your_admin_password" } | ConvertTo-Json
+$res = Invoke-RestMethod -Method Post -Uri "http://localhost:3000/api/auth/login" -ContentType "application/json" -Body $body

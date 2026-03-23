@@ -14,7 +14,7 @@
  *   TEST_TOKEN=eyJ... TEST_WORKER_TOKEN=eyJ... node tests/run_all_tests.js
  */
 
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const path = require('path');
 
 const TESTS = [
@@ -33,14 +33,17 @@ console.log('╚═════════════════════�
 
 for (const t of TESTS) {
     const filePath = path.join(__dirname, t.file);
-    try {
-        execSync(`node "${filePath}"`, {
-            stdio: 'inherit',
-            env: process.env,
-        });
-        results.push({ name: t.name, ok: true });
-    } catch {
-        results.push({ name: t.name, ok: false });
+    const run = spawnSync('node', [filePath], {
+        stdio: 'inherit',
+        env: process.env,
+    });
+
+    if (run.status === 0) {
+        results.push({ name: t.name, status: 'passed' });
+    } else if (run.status === 2) {
+        results.push({ name: t.name, status: 'skipped' });
+    } else {
+        results.push({ name: t.name, status: 'failed' });
     }
 }
 
@@ -48,12 +51,24 @@ console.log('\n━━━━━━━━━━━━━━━━━━━━━�
 console.log('  Final Summary');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-let allPassed = true;
+let hasFailures = false;
+let hasSkipped = false;
 for (const r of results) {
-    const icon = r.ok ? '✅' : '❌';
+    const icon = r.status === 'passed' ? '✅' : r.status === 'skipped' ? '⏭️' : '❌';
     console.log(`  ${icon}  ${r.name}`);
-    if (!r.ok) allPassed = false;
+    if (r.status === 'failed') hasFailures = true;
+    if (r.status === 'skipped') hasSkipped = true;
 }
 
-console.log('\n' + (allPassed ? '  🎉 All test modules passed.' : '  ⚠️  Some modules had failures.') + '\n');
-process.exit(allPassed ? 0 : 1);
+if (hasFailures) {
+    console.log('\n  ⚠️  Some modules had failures.\n');
+    process.exit(1);
+}
+
+if (hasSkipped) {
+    console.log('\n  ℹ️  No failures, but one or more modules were skipped (missing test tokens).\n');
+    process.exit(0);
+}
+
+console.log('\n  🎉 All test modules passed.\n');
+process.exit(0);

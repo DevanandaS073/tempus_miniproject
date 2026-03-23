@@ -111,7 +111,29 @@ const GEMINI_MODELS = {
   "gemini": "gemini-2.5-flash",
 };
 
+function validateGeminiApiKey(apiKey) {
+  const key = (apiKey || "").trim();
+  if (!key) {
+    throw new Error("Missing Gemini API key.");
+  }
+
+  if (key.startsWith("gen-lang-client-")) {
+    throw new Error(
+      "Invalid Gemini key format. Use a real Google AI Studio API key (starts with 'AIza'), not a client placeholder key.",
+    );
+  }
+
+  if (!key.startsWith("AIza")) {
+    throw new Error(
+      "Invalid Gemini API key format. Expected a Google API key that starts with 'AIza'.",
+    );
+  }
+
+  return key;
+}
+
 export async function analyzeWithGemini(base64Image, apiKey, providerId = "gemini") {
+  const safeApiKey = validateGeminiApiKey(apiKey);
   const modelId = GEMINI_MODELS[providerId] || providerId;
   // Gemini expects raw base64 without the data URI prefix for inlineData
   const base64Data = base64Image.split(",")[1] || base64Image;
@@ -141,7 +163,7 @@ export async function analyzeWithGemini(base64Image, apiKey, providerId = "gemin
   };
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${safeApiKey}`,
     {
       method: "POST",
       headers: {
@@ -152,9 +174,20 @@ export async function analyzeWithGemini(base64Image, apiKey, providerId = "gemin
   );
 
   if (!response.ok) {
-    const error = await response.json();
+    let error = null;
+    try {
+      error = await response.json();
+    } catch (_) {}
+
+    if (response.status === 400) {
+      throw new Error(
+        error?.error?.message ||
+          "Gemini request rejected (400). Check that your API key is valid and Generative Language API is enabled for the key.",
+      );
+    }
+
     throw new Error(
-      error.error?.message || "Failed to communicate with Gemini API",
+      error?.error?.message || "Failed to communicate with Gemini API",
     );
   }
 
@@ -199,9 +232,10 @@ export async function testOpenAIConnection(apiKey) {
 }
 
 export async function testGeminiConnection(apiKey, providerId = "gemini") {
+  const safeApiKey = validateGeminiApiKey(apiKey);
   const modelId = GEMINI_MODELS[providerId] || providerId;
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${modelId}?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${modelId}?key=${safeApiKey}`,
     {
       method: "GET",
       headers: {
@@ -211,8 +245,14 @@ export async function testGeminiConnection(apiKey, providerId = "gemini") {
   );
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || "Invalid Gemini API Key");
+    let error = null;
+    try {
+      error = await response.json();
+    } catch (_) {}
+    throw new Error(
+      error?.error?.message ||
+        "Invalid Gemini API key or API access not enabled.",
+    );
   }
   return true;
 }

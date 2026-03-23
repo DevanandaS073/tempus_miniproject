@@ -35,7 +35,7 @@ async function run() {
 
     if (!TOKEN) {
         console.log('  ⚠️  TEST_TOKEN not set. Set it to a valid workspace JWT and re-run.\n');
-        process.exit(0);
+        process.exit(2);
     }
 
     // ── 1. GET /notifications returns array ───────────────────────────────────

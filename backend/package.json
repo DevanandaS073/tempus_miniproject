@@ -4,7 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node tests/run_all_tests.js",
+    "test:all": "node tests/run_all_tests.js",
+    "test:all:auto": "node tests/run_all_tests_with_login.js",
+    "test:setup-credentials": "node scripts/setup_test_credentials.js",
+    "test:auth": "node tests/test_auth.js",
+    "test:load": "node tests/load_test.js",
+    "test:postman": "newman run postman/Tempus-Auth.postman_collection.json -e postman/Tempus.local.postman_environment.json",
+    "test:postman:ci": "newman run postman/Tempus-Auth.postman_collection.json -e postman/Tempus.local.postman_environment.json --reporters cli,junit --reporter-junit-export tests/newman-results.xml"
   },
   "keywords": [],
   "author": "",
@@ -18,11 +27,13 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^6.9.15",
     "pg": "^8.18.0",
     "prisma": "^7.3.0"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",
+    "newman": "^6.2.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

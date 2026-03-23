@@ -63,8 +63,7 @@ async function run() {
 
     // ── 1. Signup ────────────────────────────────────────────────────────────
     const signup = await post('/api/auth/signup', {
-        first_name: 'Test',
-        last_name: 'Auth',
+        name: 'Test Auth',
         email: TEST_EMAIL,
         password: TEST_PASSWORD,
     });
@@ -76,8 +75,7 @@ async function run() {
 
     // ── 2. Duplicate signup ───────────────────────────────────────────────────
     const dup = await post('/api/auth/signup', {
-        first_name: 'Test',
-        last_name: 'Auth',
+        name: 'Test Auth',
         email: TEST_EMAIL,
         password: TEST_PASSWORD,
     });
@@ -124,8 +122,8 @@ async function run() {
     // ── 6. Update password (requires valid token) ─────────────────────────────
     if (token) {
         const pwChange = await patch('/api/auth/password', {
-            current_password: TEST_PASSWORD,
-            new_password: 'NewPass456!',
+            currentPassword: TEST_PASSWORD,
+            newPassword: 'NewPass456!',
         }, token);
         if (pwChange.status === 200) {
             pass('Password update with correct current password succeeds');
@@ -157,7 +155,7 @@ async function run() {
     }
 
     // ── 9. Protected route without token ──────────────────────────────────────
-    const noToken = await patch('/api/auth/password', { current_password: 'x', new_password: 'y' });
+    const noToken = await patch('/api/auth/password', { currentPassword: 'x', newPassword: 'y' });
     if (noToken.status === 401 || noToken.status === 403) {
         pass('Protected route rejects request without token');
     } else {

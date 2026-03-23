@@ -6,11 +6,14 @@ echo ""
 echo "[!] PRE-FLIGHT CHECKS:"
 echo "Before continuing, please ensure you have:"
 echo "  1. Node.js installed"
-echo "  2. PostgreSQL installed and running locally (or a cloud DB URL)"
-echo "  3. A postgres user and password ready"
+echo "  2. Either:"
+echo "     - Supabase Session Pooler URL, or"
+echo "     - Local PostgreSQL running with credentials"
 echo ""
 echo "Press ENTER to continue, or Ctrl+C to cancel..."
 read
+
+DB_MODE=""
 
 echo -e "\n[1/4] Installing Backend Dependencies..."
 cd ../backend || exit
@@ -38,28 +41,61 @@ if [ -f .env ]; then
 fi
 
 if [ "$CREATE_ENV" == "yes" ]; then
-  echo "Please provide your local PostgreSQL credentials for the .env file."
-  echo -n "Enter your PostgreSQL username (default: postgres): "
-  read PG_USER
-  PG_USER=${PG_USER:-postgres}
-  
-  echo -n "Enter your PostgreSQL password (default: password): "
-  read -s PG_PASS
-  PG_PASS=${PG_PASS:-password}
-  echo ""
-  
-  echo "DATABASE_URL=\"postgresql://$PG_USER:$PG_PASS@localhost:5432/tempus_db?schema=public\"" > .env
-  echo "JWT_SECRET=\"super_secret_local_dev_key_12345\"" >> .env
-  echo "PORT=5000" >> .env
-  echo "[+] Saved credentials to app/backend/.env."
+  echo "Select database mode:"
+  echo "  [1] Supabase (recommended for cloud/production)"
+  echo "  [2] Local PostgreSQL (default)"
+  echo -n "Choose 1 or 2 (default: 2): "
+  read DB_MODE
+  DB_MODE=${DB_MODE:-2}
+
+  if [ "$DB_MODE" = "1" ]; then
+    echo -n "Paste your Supabase Session Pooler DATABASE_URL: "
+    read SUPABASE_URL
+    while [ -z "$SUPABASE_URL" ]; do
+      echo -n "DATABASE_URL cannot be empty. Paste Supabase DATABASE_URL: "
+      read SUPABASE_URL
+    done
+
+    echo "DATABASE_URL=\"$SUPABASE_URL\"" > .env
+    echo "JWT_SECRET=\"super_secret_local_dev_key_12345\"" >> .env
+    echo "PORT=3000" >> .env
+    echo "[+] Saved Supabase config to app/backend/.env."
+  else
+    DB_MODE="2"
+    echo "Please provide your local PostgreSQL credentials for the .env file."
+    echo -n "Enter your PostgreSQL username (default: postgres): "
+    read PG_USER
+    PG_USER=${PG_USER:-postgres}
+
+    echo -n "Enter your PostgreSQL password (default: password): "
+    read -s PG_PASS
+    PG_PASS=${PG_PASS:-password}
+    echo ""
+
+    echo "DATABASE_URL=\"postgresql://$PG_USER:$PG_PASS@localhost:5432/tempus_db?schema=public\"" > .env
+    echo "JWT_SECRET=\"super_secret_local_dev_key_12345\"" >> .env
+    echo "PORT=3000" >> .env
+    echo "[+] Saved local PostgreSQL config to app/backend/.env."
+  fi
 else
   echo "[>] Skipping .env creation."
+  if grep -qiE "supabase\.co|pooler\.supabase\.com" .env; then
+    DB_MODE="1"
+  else
+    DB_MODE="2"
+  fi
 fi
 
-echo -e "\n[3/4] Pushing Database Schema & Generating Client..."
-npx prisma db push
+echo -e "\n[3/4] Applying Database Schema & Generating Client..."
+if [ "$DB_MODE" = "1" ]; then
+  npx prisma migrate deploy
+else
+  npx prisma db push
+fi
 npx prisma generate
-node prisma/seed.js
+if [ "$DB_MODE" = "2" ]; then
+  node prisma/seed.js
+fi
 
 echo -e "\n[4/4] Installing Frontend Dependencies..."
 cd ../frontend-react || exit

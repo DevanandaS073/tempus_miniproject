@@ -32,6 +32,21 @@ function inDays(d) {
     return new Date(Date.now() + d * 24 * 60 * 60 * 1000).toISOString();
 }
 
+async function createEventWithRetry(token, payloadBuilder, path = '/api/events?force=true') {
+    const attempts = 8;
+    for (let i = 0; i < attempts; i++) {
+        const payload = payloadBuilder(i);
+        const create = await request('POST', path, payload, token);
+        if ((create.status === 200 || create.status === 201) && create.body?.event_id) {
+            return create;
+        }
+        if (create.status !== 409) {
+            return create;
+        }
+    }
+    return { status: 409, body: { error: 'Unable to find a non-conflicting event slot after retries' } };
+}
+
 async function run() {
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('  MODULE: Event Management & Participation');
@@ -40,7 +55,7 @@ async function run() {
 
     if (!TOKEN) {
         console.log('  ⚠️  TEST_TOKEN not set. Set it to a valid admin workspace JWT and re-run.\n');
-        process.exit(0);
+        process.exit(2);
     }
 
     let futureEventId = null;
@@ -56,14 +71,14 @@ async function run() {
     }
 
     // ── 2. Create a future event ──────────────────────────────────────────────
-    const createFuture = await request('POST', '/api/events', {
-        title: '[TEST] Future Workshop',
+    const createFuture = await createEventWithRetry(TOKEN, (i) => ({
+        title: `[TEST] Future Workshop ${Date.now()}-${i}`,
         event_type: 'workshop',
         description: 'Automated test event',
-        start_date: inDays(5),
-        end_date: inDays(6),
+        start_date: inDays(45 + i),
+        end_date: inDays(46 + i),
         location: 'Test Room A',
-    }, TOKEN);
+    }));
     if ((createFuture.status === 200 || createFuture.status === 201) && createFuture.body?.event_id) {
         pass('Create future event succeeds');
         futureEventId = createFuture.body.event_id;
@@ -72,13 +87,13 @@ async function run() {
     }
 
     // ── 3. Create a past event ────────────────────────────────────────────────
-    const createPast = await request('POST', '/api/events', {
-        title: '[TEST] Past Seminar',
+    const createPast = await createEventWithRetry(TOKEN, (i) => ({
+        title: `[TEST] Past Seminar ${Date.now()}-${i}`,
         event_type: 'seminar',
-        start_date: inDays(-10),
-        end_date: inDays(-9),
+        start_date: inDays(-365 - i),
+        end_date: inDays(-364 - i),
         location: 'Test Room B',
-    }, TOKEN);
+    }));
     if ((createPast.status === 200 || createPast.status === 201) && createPast.body?.event_id) {
         pass('Create past event succeeds (admin can backdate)');
         pastEventId = createPast.body.event_id;
@@ -118,11 +133,11 @@ async function run() {
 
     // ── 7. Create a colliding event and join it — should get 409 ─────────────
     if (futureEventId) {
-        const createCollision = await request('POST', '/api/events', {
+        const createCollision = await request('POST', '/api/events?force=true', {
             title: '[TEST] Collision Event',
             event_type: 'workshop',
-            start_date: inDays(5),    // same window as futureEvent
-            end_date: inDays(5.5),
+            start_date: createFuture.body.start_date,
+            end_date: createFuture.body.end_date,
             location: 'Test Room C',
         }, TOKEN);
         if ((createCollision.status === 200 || createCollision.status === 201) && createCollision.body?.event_id) {
